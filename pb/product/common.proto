@@ -1,0 +1,6 @@
+syntax = "proto3";
+package pb.product;
+
+option go_package = "pb/product";
+
+message Empty {}

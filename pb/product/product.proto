@@ -1,0 +1,67 @@
+syntax = "proto3";
+package pb.product;
+
+option go_package = "pb/product";
+
+message Product {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  float price = 4;
+  string thumbnail_id = 5;
+  string owner_id = 6;
+  string created_at = 7;
+  string updated_at = 8;
+  string deleted_at = 9;
+}
+
+message CreateProductRequest {
+  string user_id = 1;
+  string name = 2;
+  string description = 3;
+  float price = 4;
+  string thumbnail_id = 5;
+}
+
+message UpdateProductRequest {
+  string user_id = 1;
+  string id = 2;
+  string name = 3;
+  string description = 4;
+  float price = 5;
+  string thumbnail_id = 6;
+}
+
+message DeleteProductRequest {
+  string user_id = 1;
+  string product_id = 2;
+}
+
+message PaginationRequest {
+  string user_id = 1;
+  string search = 2;
+  repeated string sort = 3;
+  int64 limit = 4;
+  int64 page = 5;
+}
+
+message PaginationResponse {
+  PaginationRequest meta = 1;
+  int64 count = 2;
+  int64 maxPage = 3;
+  repeated string items = 5;
+}
+
+message FindByIDRequest {
+  string user_id = 1;
+  string id = 2;
+}
+
+message FindByIDsRequest {
+  string user_id = 1;
+  repeated string ids = 2;
+}
+
+message FindByIDsResponse {
+  repeated Product items = 2;
+}

@@ -1,0 +1,16 @@
+syntax = "proto3";
+package pb.product;
+
+option go_package = "pb/product";
+
+import "pb/product/product.proto";
+import "pb/product/common.proto";
+
+service ProductService {
+	rpc Create(CreateProductRequest) returns (Product) {}
+  rpc Update(UpdateProductRequest) returns (Product) {}
+  rpc Delete(DeleteProductRequest) returns (Empty) {}
+  rpc FindByID(FindByIDRequest) returns (Product) {}
+  rpc FindByIDs(FindByIDsRequest) returns (FindByIDsResponse) {}
+  rpc FindPaginatedIDs(PaginationRequest) returns (PaginationResponse) {}
+}
