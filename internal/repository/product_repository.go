@@ -5,6 +5,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/go-redis/redis/v8"
+	"github.com/goccy/go-json"
 	"github.com/krobus00/product-service/internal/model"
 	"github.com/krobus00/product-service/internal/utils"
 	log "github.com/sirupsen/logrus"
@@ -12,7 +14,8 @@ import (
 )
 
 type productRepository struct {
-	db *gorm.DB
+	db          *gorm.DB
+	redisClient *redis.Client
 }
 
 func NewProductRepository() model.ProductRepository {
@@ -24,6 +27,7 @@ func (r *productRepository) Create(ctx context.Context, product *model.Product) 
 		"productID":   product.ID,
 		"thumbnailID": product.ThumbnailID,
 	})
+
 	db := utils.GetTxFromContext(ctx, r.db)
 
 	err := db.WithContext(ctx).Create(product).Error
@@ -32,6 +36,8 @@ func (r *productRepository) Create(ctx context.Context, product *model.Product) 
 		return err
 	}
 
+	_ = DeleteByKeys(ctx, r.redisClient, model.GetProductCacheKeys(product.ID))
+
 	return nil
 }
 
@@ -39,13 +45,17 @@ func (r *productRepository) Update(ctx context.Context, product *model.Product) 
 	logger := log.WithFields(log.Fields{
 		"productID": product.ID,
 	})
+
 	db := utils.GetTxFromContext(ctx, r.db)
+
 	product.UpdatedAt = time.Now()
 	err := db.WithContext(ctx).Updates(product).Error
 	if err != nil {
 		logger.Error(err.Error())
 		return err
 	}
+
+	_ = DeleteByKeys(ctx, r.redisClient, model.GetProductCacheKeys(product.ID))
 
 	return nil
 }
@@ -54,6 +64,7 @@ func (r *productRepository) DeleteByID(ctx context.Context, id string) error {
 	logger := log.WithFields(log.Fields{
 		"productID": id,
 	})
+
 	db := utils.GetTxFromContext(ctx, r.db)
 
 	err := db.WithContext(ctx).Where("id = ?", id).Delete(&model.Product{}).Error
@@ -61,6 +72,8 @@ func (r *productRepository) DeleteByID(ctx context.Context, id string) error {
 		logger.Error(err.Error())
 		return err
 	}
+
+	_ = DeleteByKeys(ctx, r.redisClient, model.GetProductCacheKeys(id))
 
 	return nil
 }
@@ -100,16 +113,38 @@ func (r *productRepository) FindByID(ctx context.Context, id string) (*model.Pro
 	logger := log.WithFields(log.Fields{
 		"productID": id,
 	})
+
 	db := utils.GetTxFromContext(ctx, r.db)
 	product := new(model.Product)
+	cacheKey := model.NewProductCacheKey(id)
 
-	err := db.WithContext(ctx).Where("id = ?", id).First(product).Error
+	cachedData, err := Get(ctx, r.redisClient, cacheKey)
+	if err != nil {
+		logger.Error(err.Error())
+	}
+	err = json.Unmarshal(cachedData, &product)
+	if err == nil {
+		return product, nil
+	}
+
+	product = new(model.Product)
+
+	err = db.WithContext(ctx).Where("id = ?", id).First(product).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
+			err = SetWithExpiry(ctx, r.redisClient, cacheKey, nil)
+			if err != nil {
+				logger.Error(err.Error())
+			}
 			return nil, nil
 		}
 		logger.Error(err.Error())
 		return nil, err
+	}
+
+	err = SetWithExpiry(ctx, r.redisClient, cacheKey, product)
+	if err != nil {
+		logger.Error(err.Error())
 	}
 
 	return product, nil

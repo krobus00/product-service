@@ -6,8 +6,10 @@ package model
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
+	"github.com/go-redis/redis/v8"
 	authPB "github.com/krobus00/auth-service/pb/auth"
 	"github.com/krobus00/product-service/internal/utils"
 	pb "github.com/krobus00/product-service/pb/product"
@@ -42,6 +44,20 @@ type Product struct {
 
 type Products []*Product
 
+func (Product) TableName() string {
+	return "products"
+}
+
+func NewProductCacheKey(id string) string {
+	return fmt.Sprintf("products:id:%s", id)
+}
+
+func GetProductCacheKeys(id string) []string {
+	return []string{
+		NewProductCacheKey(id),
+	}
+}
+
 func (m Products) ToProto() []*pb.Product {
 	results := make([]*pb.Product, 0)
 	for _, product := range m {
@@ -51,10 +67,6 @@ func (m Products) ToProto() []*pb.Product {
 		results = append(results, product.ToProto())
 	}
 	return results
-}
-
-func (Product) TableName() string {
-	return "products"
 }
 
 func (m *Product) ToProto() *pb.Product {
@@ -145,6 +157,7 @@ type ProductRepository interface {
 
 	// DI
 	InjectDB(db *gorm.DB) error
+	InjectRedisClient(client *redis.Client) error
 }
 
 type ProductUsecase interface {

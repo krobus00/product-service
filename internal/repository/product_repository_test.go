@@ -3,26 +3,30 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
 	"reflect"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/alicebob/miniredis/v2"
+	"github.com/krobus00/product-service/internal/infrastructure"
 	"github.com/krobus00/product-service/internal/model"
 	"github.com/krobus00/product-service/internal/utils"
-	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"gorm.io/gorm"
 )
 
-func newProductRepoMock() (model.ProductRepository, sqlmock.Sqlmock) {
+func newProductRepoMock(t *testing.T) (model.ProductRepository, sqlmock.Sqlmock, *miniredis.Miniredis) {
 	db, sqlMock := utils.NewDBMock()
-
+	miniRedis := miniredis.RunT(t)
+	viper.Set("redis.cache_host", fmt.Sprintf("redis://%s", miniRedis.Addr()))
+	redisClient, err := infrastructure.NewRedisClient()
 	productRepo := NewProductRepository()
-	err := productRepo.InjectDB(db)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
+	err = productRepo.InjectDB(db)
+	utils.ContinueOrFatal(err)
+	err = productRepo.InjectRedisClient(redisClient)
 
-	return productRepo, sqlMock
+	return productRepo, sqlMock, miniRedis
 }
 
 func Test_productRepository_Create(t *testing.T) {
@@ -69,7 +73,7 @@ func Test_productRepository_Create(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r, dbMock := newProductRepoMock()
+			r, dbMock, _ := newProductRepoMock(t)
 
 			dbMock.ExpectBegin()
 			dbMock.ExpectExec("INSERT INTO \"products\"").
@@ -133,7 +137,7 @@ func Test_productRepository_Update(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r, dbMock := newProductRepoMock()
+			r, dbMock, _ := newProductRepoMock(t)
 
 			dbMock.ExpectBegin()
 			dbMock.ExpectExec("UPDATE \"products\"").
@@ -183,7 +187,7 @@ func Test_productRepository_DeleteByID(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r, dbMock := newProductRepoMock()
+			r, dbMock, _ := newProductRepoMock(t)
 
 			dbMock.ExpectBegin()
 			dbMock.ExpectExec("UPDATE \"products\"").
@@ -291,7 +295,7 @@ func Test_productRepository_FindPaginatedIDs(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r, dbMock := newProductRepoMock()
+			r, dbMock, _ := newProductRepoMock(t)
 
 			if tt.mockCount != nil {
 				row := sqlmock.NewRows([]string{"count"}).
@@ -398,7 +402,7 @@ func Test_productRepository_FindByID(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r, dbMock := newProductRepoMock()
+			r, dbMock, _ := newProductRepoMock(t)
 			if tt.mockSelect != nil {
 				row := sqlmock.NewRows([]string{"id", "name", "description", "price", "thumbnail_id", "owner_id", "created_at", "updated_at", "deleted_at"})
 				if tt.mockSelect.product != nil {

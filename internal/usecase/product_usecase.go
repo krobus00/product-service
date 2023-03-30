@@ -238,6 +238,7 @@ func (uc *productUsecase) FindByIDs(ctx context.Context, ids []string) (model.Pr
 	}
 
 	productMap := map[string]*model.Product{}
+	productMapMu := sync.Mutex{}
 
 	wg := sync.WaitGroup{}
 	wg.Add(len(ids))
@@ -253,7 +254,9 @@ func (uc *productUsecase) FindByIDs(ctx context.Context, ids []string) (model.Pr
 				logger.Error(err.Error())
 				return
 			}
+			productMapMu.Lock()
 			productMap[id] = product
+			productMapMu.Unlock()
 		}(productID)
 	}
 

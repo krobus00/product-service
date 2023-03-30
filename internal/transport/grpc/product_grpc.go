@@ -2,14 +2,21 @@ package grpc
 
 import (
 	"context"
+	"time"
 
 	"github.com/krobus00/product-service/internal/model"
+	"github.com/krobus00/product-service/internal/utils"
 	pb "github.com/krobus00/product-service/pb/product"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 func (t *Delivery) Create(ctx context.Context, in *pb.CreateProductRequest) (*pb.Product, error) {
+	defer func(tn time.Time) {
+		_, _, fn := utils.Trace()
+		utils.TimeTrack(tn, fn)
+	}(time.Now())
+
 	ctx = setUserIDCtx(ctx, in.GetUserId())
 
 	payload := model.NewCreateProductPayloadFromProto(in)
@@ -30,6 +37,11 @@ func (t *Delivery) Create(ctx context.Context, in *pb.CreateProductRequest) (*pb
 }
 
 func (t *Delivery) Update(ctx context.Context, in *pb.UpdateProductRequest) (*pb.Product, error) {
+	defer func(tn time.Time) {
+		_, _, fn := utils.Trace()
+		utils.TimeTrack(tn, fn)
+	}(time.Now())
+
 	ctx = setUserIDCtx(ctx, in.GetUserId())
 
 	payload := model.NewUpdateProductPayloadFromProto(in)
@@ -52,6 +64,11 @@ func (t *Delivery) Update(ctx context.Context, in *pb.UpdateProductRequest) (*pb
 }
 
 func (t *Delivery) Delete(ctx context.Context, in *pb.DeleteProductRequest) (*pb.Empty, error) {
+	defer func(tn time.Time) {
+		_, _, fn := utils.Trace()
+		utils.TimeTrack(tn, fn)
+	}(time.Now())
+
 	ctx = setUserIDCtx(ctx, in.GetUserId())
 
 	err := t.productUC.Delete(ctx, in.GetProductId())
@@ -69,6 +86,11 @@ func (t *Delivery) Delete(ctx context.Context, in *pb.DeleteProductRequest) (*pb
 }
 
 func (t *Delivery) FindByID(ctx context.Context, in *pb.FindByIDRequest) (*pb.Product, error) {
+	defer func(tn time.Time) {
+		_, _, fn := utils.Trace()
+		utils.TimeTrack(tn, fn)
+	}(time.Now())
+
 	ctx = setUserIDCtx(ctx, in.GetUserId())
 
 	product, err := t.productUC.FindByID(ctx, in.GetId())
@@ -85,6 +107,11 @@ func (t *Delivery) FindByID(ctx context.Context, in *pb.FindByIDRequest) (*pb.Pr
 	return product.ToProto(), nil
 }
 func (t *Delivery) FindByIDs(ctx context.Context, in *pb.FindByIDsRequest) (*pb.FindByIDsResponse, error) {
+	defer func(tn time.Time) {
+		_, _, fn := utils.Trace()
+		utils.TimeTrack(tn, fn)
+	}(time.Now())
+
 	ctx = setUserIDCtx(ctx, in.GetUserId())
 
 	product, err := t.productUC.FindByIDs(ctx, in.GetIds())
@@ -104,6 +131,11 @@ func (t *Delivery) FindByIDs(ctx context.Context, in *pb.FindByIDsRequest) (*pb.
 }
 
 func (t *Delivery) FindPaginatedIDs(ctx context.Context, in *pb.PaginationRequest) (*pb.PaginationResponse, error) {
+	defer func(tn time.Time) {
+		_, _, fn := utils.Trace()
+		utils.TimeTrack(tn, fn)
+	}(time.Now())
+
 	ctx = setUserIDCtx(ctx, in.GetUserId())
 
 	payload := model.NewPaginationPayloadFromProto(in)
