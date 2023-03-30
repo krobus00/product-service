@@ -21,10 +21,12 @@ func newProductRepoMock(t *testing.T) (model.ProductRepository, sqlmock.Sqlmock,
 	miniRedis := miniredis.RunT(t)
 	viper.Set("redis.cache_host", fmt.Sprintf("redis://%s", miniRedis.Addr()))
 	redisClient, err := infrastructure.NewRedisClient()
+	utils.ContinueOrFatal(err)
 	productRepo := NewProductRepository()
 	err = productRepo.InjectDB(db)
 	utils.ContinueOrFatal(err)
 	err = productRepo.InjectRedisClient(redisClient)
+	utils.ContinueOrFatal(err)
 
 	return productRepo, sqlMock, miniRedis
 }
