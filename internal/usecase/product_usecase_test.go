@@ -713,7 +713,8 @@ func Test_productUsecase_FindPaginatedIDs(t *testing.T) {
 	productID := utils.GenerateUUID()
 
 	type args struct {
-		req *model.PaginationPayload
+		datasource int
+		req        *model.PaginationPayload
 	}
 	type mockFindPaginatedIDs struct {
 		ids   []string
@@ -736,6 +737,7 @@ func Test_productUsecase_FindPaginatedIDs(t *testing.T) {
 		{
 			name: "success",
 			args: args{
+				datasource: constant.SourceDB,
 				req: &model.PaginationPayload{
 					Search: "",
 					Sort:   []string{},
@@ -769,6 +771,7 @@ func Test_productUsecase_FindPaginatedIDs(t *testing.T) {
 		{
 			name: "error when get data",
 			args: args{
+				datasource: constant.SourceDB,
 				req: &model.PaginationPayload{
 					Search: "",
 					Sort:   []string{},
@@ -792,6 +795,7 @@ func Test_productUsecase_FindPaginatedIDs(t *testing.T) {
 		{
 			name: "permission denied",
 			args: args{
+				datasource: constant.SourceDB,
 				req: &model.PaginationPayload{
 					Search: "",
 					Sort:   []string{},
@@ -815,6 +819,7 @@ func Test_productUsecase_FindPaginatedIDs(t *testing.T) {
 
 			ctx := context.TODO()
 			ctx = context.WithValue(ctx, constant.KeyUserIDCtx, tt.userID)
+			ctx = context.WithValue(ctx, constant.KeyDataSource, tt.args.datasource)
 
 			uc := NewProductUsecase()
 			db, _ := utils.NewDBMock()

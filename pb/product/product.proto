@@ -34,7 +34,7 @@ message UpdateProductRequest {
 
 message DeleteProductRequest {
   string user_id = 1;
-  string product_id = 2;
+  string id = 2;
 }
 
 message PaginationRequest {
@@ -43,6 +43,7 @@ message PaginationRequest {
   repeated string sort = 3;
   int64 limit = 4;
   int64 page = 5;
+  bool include_deleted = 6;
 }
 
 message PaginationResponse {

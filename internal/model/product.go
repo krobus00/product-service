@@ -11,6 +11,7 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	authPB "github.com/krobus00/auth-service/pb/auth"
+	kit "github.com/krobus00/krokit"
 	"github.com/krobus00/product-service/internal/utils"
 	pb "github.com/krobus00/product-service/pb/product"
 	storagePB "github.com/krobus00/storage-service/pb/storage"
@@ -18,6 +19,10 @@ import (
 )
 
 const (
+	OSProductIndex              = "products"
+	OSProductAnalyzer           = "my_analyzer"
+	OSProductMinimumShouldMatch = "50%"
+
 	ThumbnailType = string("IMAGE")
 )
 
@@ -89,6 +94,39 @@ func (m *Product) ToProto() *pb.Product {
 	}
 }
 
+type DocProduct struct {
+	ID          string         `json:"id"`
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	Price       float64        `json:"price"`
+	OwnerID     string         `json:"owner_id"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+	DeletedAt   gorm.DeletedAt `json:"deleted_at"`
+}
+
+func (m *DocProduct) GetID() string {
+	return m.ID
+}
+
+func (m *Product) ToDoc() *DocProduct {
+	deletedAt := gorm.DeletedAt{}
+	if m.DeletedAt.Valid {
+		deletedAt.Valid = true
+		deletedAt.Time = m.DeletedAt.Time.UTC()
+	}
+	return &DocProduct{
+		ID:          m.ID,
+		Name:        m.Name,
+		Description: m.Description,
+		Price:       m.Price,
+		OwnerID:     m.OwnerID,
+		CreatedAt:   m.CreatedAt.UTC(),
+		UpdatedAt:   m.UpdatedAt.UTC(),
+		DeletedAt:   deletedAt,
+	}
+}
+
 type CreateProductPayload struct {
 	ID          string
 	Name        string
@@ -151,6 +189,7 @@ type ProductRepository interface {
 	Update(ctx context.Context, product *Product) error
 	DeleteByID(ctx context.Context, id string) error
 	FindPaginatedIDs(ctx context.Context, req *PaginationPayload) (ids []string, count int64, err error)
+	FindOSPaginatedIDs(ctx context.Context, req *PaginationPayload) (ids []string, count int64, err error)
 
 	// Resolver
 	FindByID(ctx context.Context, id string) (*Product, error)
@@ -158,6 +197,7 @@ type ProductRepository interface {
 	// DI
 	InjectDB(db *gorm.DB) error
 	InjectRedisClient(client *redis.Client) error
+	InjectOpensearchClient(client kit.OpensearchClient) error
 }
 
 type ProductUsecase interface {

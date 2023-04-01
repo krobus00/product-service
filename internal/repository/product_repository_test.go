@@ -9,6 +9,8 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/alicebob/miniredis/v2"
+	"github.com/golang/mock/gomock"
+	kitMock "github.com/krobus00/krokit/mock"
 	"github.com/krobus00/product-service/internal/infrastructure"
 	"github.com/krobus00/product-service/internal/model"
 	"github.com/krobus00/product-service/internal/utils"
@@ -33,14 +35,18 @@ func newProductRepoMock(t *testing.T) (model.ProductRepository, sqlmock.Sqlmock,
 
 func Test_productRepository_Create(t *testing.T) {
 	productID := utils.GenerateUUID()
+	type mockIndex struct {
+		err error
+	}
 	type args struct {
 		product *model.Product
 	}
 	tests := []struct {
-		name    string
-		args    args
-		mockErr error
-		wantErr bool
+		name      string
+		args      args
+		mockIndex *mockIndex
+		mockErr   error
+		wantErr   bool
 	}{
 		{
 			name: "success",
@@ -53,6 +59,9 @@ func Test_productRepository_Create(t *testing.T) {
 					ThumbnailID: utils.GenerateUUID(),
 					OwnerID:     utils.GenerateUUID(),
 				},
+			},
+			mockIndex: &mockIndex{
+				err: nil,
 			},
 			mockErr: nil,
 			wantErr: false,
@@ -75,7 +84,14 @@ func Test_productRepository_Create(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
 			r, dbMock, _ := newProductRepoMock(t)
+			osClient := kitMock.NewMockOpensearchClient(ctrl)
+
+			err := r.InjectOpensearchClient(osClient)
+			utils.ContinueOrFatal(err)
 
 			dbMock.ExpectBegin()
 			dbMock.ExpectExec("INSERT INTO \"products\"").
@@ -83,11 +99,16 @@ func Test_productRepository_Create(t *testing.T) {
 				WillReturnResult(sqlmock.NewResult(1, 1)).
 				WillReturnError(tt.mockErr)
 
+			if tt.mockIndex != nil {
+				osClient.EXPECT().Index(gomock.Any(), gomock.Any(), gomock.Any()).Times(1).Return(tt.mockIndex.err)
+			}
+
 			if tt.wantErr {
 				dbMock.ExpectRollback()
 			} else {
 				dbMock.ExpectCommit()
 			}
+
 			if err := r.Create(context.TODO(), tt.args.product); (err != nil) != tt.wantErr {
 				t.Errorf("productRepository.Create() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -97,14 +118,18 @@ func Test_productRepository_Create(t *testing.T) {
 
 func Test_productRepository_Update(t *testing.T) {
 	productID := utils.GenerateUUID()
+	type mockIndex struct {
+		err error
+	}
 	type args struct {
 		product *model.Product
 	}
 	tests := []struct {
-		name    string
-		args    args
-		mockErr error
-		wantErr bool
+		name      string
+		args      args
+		mockIndex *mockIndex
+		mockErr   error
+		wantErr   bool
 	}{
 		{
 			name: "success",
@@ -117,6 +142,9 @@ func Test_productRepository_Update(t *testing.T) {
 					ThumbnailID: utils.GenerateUUID(),
 					OwnerID:     utils.GenerateUUID(),
 				},
+			},
+			mockIndex: &mockIndex{
+				err: nil,
 			},
 			mockErr: nil,
 			wantErr: false,
@@ -139,13 +167,24 @@ func Test_productRepository_Update(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
 			r, dbMock, _ := newProductRepoMock(t)
+			osClient := kitMock.NewMockOpensearchClient(ctrl)
+
+			err := r.InjectOpensearchClient(osClient)
+			utils.ContinueOrFatal(err)
 
 			dbMock.ExpectBegin()
 			dbMock.ExpectExec("UPDATE \"products\"").
 				WithArgs(tt.args.product.Name, tt.args.product.Description, tt.args.product.Price, tt.args.product.ThumbnailID, tt.args.product.OwnerID, sqlmock.AnyArg(), productID).
 				WillReturnResult(sqlmock.NewResult(1, 1)).
 				WillReturnError(tt.mockErr)
+
+			if tt.mockIndex != nil {
+				osClient.EXPECT().Index(gomock.Any(), gomock.Any(), gomock.Any()).Times(1).Return(tt.mockIndex.err)
+			}
 
 			if tt.wantErr {
 				dbMock.ExpectRollback()
@@ -161,19 +200,26 @@ func Test_productRepository_Update(t *testing.T) {
 
 func Test_productRepository_DeleteByID(t *testing.T) {
 	productID := utils.GenerateUUID()
+	type mockIndex struct {
+		err error
+	}
 	type args struct {
 		id string
 	}
 	tests := []struct {
-		name    string
-		args    args
-		mockErr error
-		wantErr bool
+		name      string
+		args      args
+		mockIndex *mockIndex
+		mockErr   error
+		wantErr   bool
 	}{
 		{
 			name: "success",
 			args: args{
 				id: productID,
+			},
+			mockIndex: &mockIndex{
+				err: nil,
 			},
 			mockErr: nil,
 			wantErr: false,
@@ -189,13 +235,28 @@ func Test_productRepository_DeleteByID(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
 			r, dbMock, _ := newProductRepoMock(t)
+			osClient := kitMock.NewMockOpensearchClient(ctrl)
+
+			err := r.InjectOpensearchClient(osClient)
+			utils.ContinueOrFatal(err)
 
 			dbMock.ExpectBegin()
-			dbMock.ExpectExec("UPDATE \"products\"").
-				WithArgs(sqlmock.AnyArg(), productID).
-				WillReturnResult(sqlmock.NewResult(1, 1)).
+			row := sqlmock.NewRows([]string{"id"})
+
+			row.AddRow(tt.args.id)
+
+			dbMock.ExpectQuery("UPDATE \"products\"").
+				WithArgs(sqlmock.AnyArg(), tt.args.id).
+				WillReturnRows(row).
 				WillReturnError(tt.mockErr)
+
+			if tt.mockIndex != nil {
+				osClient.EXPECT().Index(gomock.Any(), gomock.Any(), gomock.Any()).Times(1).Return(tt.mockIndex.err)
+			}
 
 			if tt.wantErr {
 				dbMock.ExpectRollback()
@@ -313,7 +374,6 @@ func Test_productRepository_FindPaginatedIDs(t *testing.T) {
 					row.AddRow(id)
 				}
 				dbMock.ExpectQuery("^SELECT .+ FROM \"products\"").
-					WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).
 					WillReturnRows(row).
 					WillReturnError(tt.mockSelect.err)
 			}

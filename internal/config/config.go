@@ -135,6 +135,22 @@ func RedisCacheTTL() time.Duration {
 	return parseDuration(cfg, DefaultRedisCacheTTL)
 }
 
+func OpensearchHost() []string {
+	return viper.GetStringSlice("opensearch.host")
+}
+
+func OpensearchUsername() string {
+	return viper.GetString("opensearch.username")
+}
+
+func OpensearchPassword() string {
+	return viper.GetString("opensearch.password")
+}
+
+func OpensearchInsecure() bool {
+	return viper.GetBool("opensearch.insecure")
+}
+
 func AuthGRPCHost() string {
 	return viper.GetString("services.auth_grpc")
 }
