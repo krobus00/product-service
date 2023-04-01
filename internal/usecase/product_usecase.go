@@ -157,7 +157,12 @@ func (uc *productUsecase) Delete(ctx context.Context, id string) error {
 }
 
 func (uc *productUsecase) FindPaginatedIDs(ctx context.Context, req *model.PaginationPayload) (*model.PaginationResponse, error) {
-	userID := getUserIDFromCtx(ctx)
+	var (
+		ids        = make([]string, 0)
+		count      = int64(0)
+		userID     = getUserIDFromCtx(ctx)
+		dataSource = getDataSource(ctx)
+	)
 
 	logger := log.WithFields(log.Fields{
 		"userID": userID,
@@ -176,8 +181,14 @@ func (uc *productUsecase) FindPaginatedIDs(ctx context.Context, req *model.Pagin
 	}
 
 	req = req.Sanitize()
-
-	ids, count, err := uc.productRepo.FindPaginatedIDs(ctx, req)
+	switch dataSource {
+	case constant.SourceDB:
+		ids, count, err = uc.productRepo.FindPaginatedIDs(ctx, req)
+	case constant.SourceOS:
+		ids, count, err = uc.productRepo.FindOSPaginatedIDs(ctx, req)
+	default:
+		ids, count, err = uc.productRepo.FindOSPaginatedIDs(ctx, req)
+	}
 	if err != nil {
 		logger.Error(err.Error())
 		return nil, err

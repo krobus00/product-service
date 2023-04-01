@@ -4,12 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
+	"strings"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/goccy/go-json"
 	"github.com/krobus00/product-service/internal/config"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 func WithPagination(page int, limit int) func(db *gorm.DB) *gorm.DB {
@@ -24,8 +27,35 @@ func WithSearch(value string, columns []string) func(db *gorm.DB) *gorm.DB {
 		if value == "" {
 			return db
 		}
-		for _, column := range columns {
-			db.Where(fmt.Sprintf("%s LIKE ?", column), fmt.Sprintf("%%%s%%", value))
+		query := ""
+		for i, column := range columns {
+			query += fmt.Sprintf("%s LIKE '%%%s%%'", column, value)
+			if i < len(columns)-1 {
+				query += " OR "
+			}
+		}
+		db.Where(query)
+		return db
+	}
+}
+
+func WithSortBy(sorts []string) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		for _, sort := range sorts {
+			isDescOrder := strings.Contains(sort, "-")
+			re := regexp.MustCompile(`[+-]`)
+			sort = re.ReplaceAllString(sort, "")
+
+			db.Order(clause.OrderByColumn{Column: clause.Column{Name: sort}, Desc: isDescOrder})
+		}
+		return db
+	}
+}
+
+func WithDeleted(includeDeleted bool) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		if !includeDeleted {
+			db.Where("deleted_at", nil)
 		}
 		return db
 	}
