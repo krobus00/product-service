@@ -41,11 +41,12 @@ func (r *productRepository) Create(ctx context.Context, product *model.Product) 
 		return err
 	}
 
-	err = r.osClient.Index(ctx, model.OSProductIndex, product.ToDoc())
+	res, err := r.osClient.Index(ctx, model.OSProductIndex, product.ToDoc())
 	if err != nil {
 		logger.Error(err.Error())
 		return err
 	}
+	defer res.Body.Close()
 
 	_ = DeleteByKeys(ctx, r.redisClient, model.GetProductCacheKeys(product.ID))
 
@@ -66,11 +67,12 @@ func (r *productRepository) Update(ctx context.Context, product *model.Product) 
 		return err
 	}
 
-	err = r.osClient.Index(ctx, model.OSProductIndex, product.ToDoc())
+	res, err := r.osClient.Index(ctx, model.OSProductIndex, product.ToDoc())
 	if err != nil {
 		logger.Error(err.Error())
 		return err
 	}
+	defer res.Body.Close()
 
 	_ = DeleteByKeys(ctx, r.redisClient, model.GetProductCacheKeys(product.ID))
 
@@ -93,11 +95,12 @@ func (r *productRepository) DeleteByID(ctx context.Context, id string) error {
 		return err
 	}
 
-	err = r.osClient.Index(ctx, model.OSProductIndex, product.ToDoc())
+	res, err := r.osClient.Index(ctx, model.OSProductIndex, product.ToDoc())
 	if err != nil {
 		logger.Error(err.Error())
 		return err
 	}
+	defer res.Body.Close()
 
 	_ = DeleteByKeys(ctx, r.redisClient, model.GetProductCacheKeys(id))
 

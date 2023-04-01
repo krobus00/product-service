@@ -20,6 +20,7 @@ func StartInitIndex() {
 	if err != nil {
 		logrus.Error(err.Error())
 	}
+	defer resCreateIndices.Body.Close()
 
 	if resCreateIndices.IsError() {
 		logrus.Error("error init index")
@@ -32,6 +33,7 @@ func StartInitIndex() {
 	if err != nil {
 		logrus.Error(err.Error())
 	}
+	defer resUpdateMapping.Body.Close()
 
 	if resUpdateMapping.IsError() {
 		logrus.Error("error update mapping")
