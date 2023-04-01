@@ -71,7 +71,7 @@ func (t *Delivery) Delete(ctx context.Context, in *pb.DeleteProductRequest) (*pb
 
 	ctx = setUserIDCtx(ctx, in.GetUserId())
 
-	err := t.productUC.Delete(ctx, in.GetProductId())
+	err := t.productUC.Delete(ctx, in.GetId())
 	switch err {
 	case nil:
 	case model.ErrUnauthorizedAccess:
@@ -106,6 +106,7 @@ func (t *Delivery) FindByID(ctx context.Context, in *pb.FindByIDRequest) (*pb.Pr
 
 	return product.ToProto(), nil
 }
+
 func (t *Delivery) FindByIDs(ctx context.Context, in *pb.FindByIDsRequest) (*pb.FindByIDsResponse, error) {
 	defer func(tn time.Time) {
 		_, _, fn := utils.Trace()

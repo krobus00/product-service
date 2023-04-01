@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	authPB "github.com/krobus00/auth-service/pb/auth"
 	"github.com/krobus00/product-service/internal/constant"
@@ -17,6 +18,16 @@ func getUserIDFromCtx(ctx context.Context) string {
 		return constant.GuestID
 	}
 	return userID
+}
+
+func getDataSource(ctx context.Context) int {
+	ctxData := ctx.Value(constant.KeyDataSource)
+
+	data, err := strconv.Atoi(fmt.Sprintf("%v", ctxData))
+	if err != nil {
+		return constant.SourceOS
+	}
+	return data
 }
 
 func hasAccess(ctx context.Context, authClient authPB.AuthServiceClient, permissions []string) error {

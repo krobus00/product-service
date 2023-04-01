@@ -31,6 +31,9 @@ func StartServer() {
 	redisClient, err := infrastructure.NewRedisClient()
 	utils.ContinueOrFatal(err)
 
+	osClient, err := infrastructure.NewOpensearchClient()
+	utils.ContinueOrFatal(err)
+
 	// init grpc client
 	authConn, err := grpc.Dial(config.AuthGRPCHost(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	utils.ContinueOrFatal(err)
@@ -46,6 +49,8 @@ func StartServer() {
 	err = productRepo.InjectDB(infrastructure.DB)
 	utils.ContinueOrFatal(err)
 	err = productRepo.InjectRedisClient(redisClient)
+	utils.ContinueOrFatal(err)
+	err = productRepo.InjectOpensearchClient(osClient)
 	utils.ContinueOrFatal(err)
 
 	// init usecase

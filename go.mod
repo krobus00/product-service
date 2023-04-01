@@ -11,8 +11,10 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/jpillora/backoff v1.0.0
 	github.com/krobus00/auth-service v0.3.3
+	github.com/krobus00/krokit v0.0.3
 	github.com/krobus00/storage-service v0.3.0
 	github.com/lib/pq v1.10.7
+	github.com/opensearch-project/opensearch-go v1.1.0
 	github.com/pressly/goose/v3 v3.9.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.6.1

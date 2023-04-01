@@ -10,6 +10,7 @@ import (
 
 	redis "github.com/go-redis/redis/v8"
 	gomock "github.com/golang/mock/gomock"
+	kit "github.com/krobus00/krokit"
 	model "github.com/krobus00/product-service/internal/model"
 	gorm "gorm.io/gorm"
 )
@@ -80,6 +81,22 @@ func (mr *MockProductRepositoryMockRecorder) FindByID(arg0, arg1 interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByID", reflect.TypeOf((*MockProductRepository)(nil).FindByID), arg0, arg1)
 }
 
+// FindOSPaginatedIDs mocks base method.
+func (m *MockProductRepository) FindOSPaginatedIDs(arg0 context.Context, arg1 *model.PaginationPayload) ([]string, int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindOSPaginatedIDs", arg0, arg1)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(int64)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// FindOSPaginatedIDs indicates an expected call of FindOSPaginatedIDs.
+func (mr *MockProductRepositoryMockRecorder) FindOSPaginatedIDs(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindOSPaginatedIDs", reflect.TypeOf((*MockProductRepository)(nil).FindOSPaginatedIDs), arg0, arg1)
+}
+
 // FindPaginatedIDs mocks base method.
 func (m *MockProductRepository) FindPaginatedIDs(arg0 context.Context, arg1 *model.PaginationPayload) ([]string, int64, error) {
 	m.ctrl.T.Helper()
@@ -108,6 +125,20 @@ func (m *MockProductRepository) InjectDB(arg0 *gorm.DB) error {
 func (mr *MockProductRepositoryMockRecorder) InjectDB(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InjectDB", reflect.TypeOf((*MockProductRepository)(nil).InjectDB), arg0)
+}
+
+// InjectOpensearchClient mocks base method.
+func (m *MockProductRepository) InjectOpensearchClient(arg0 kit.OpensearchClient) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InjectOpensearchClient", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// InjectOpensearchClient indicates an expected call of InjectOpensearchClient.
+func (mr *MockProductRepositoryMockRecorder) InjectOpensearchClient(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InjectOpensearchClient", reflect.TypeOf((*MockProductRepository)(nil).InjectOpensearchClient), arg0)
 }
 
 // InjectRedisClient mocks base method.

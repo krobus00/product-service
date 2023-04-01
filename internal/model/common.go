@@ -47,18 +47,20 @@ func (m *Response) WithData(data any) *Response {
 }
 
 type PaginationPayload struct {
-	Search string   `json:"search" query:"search"`
-	Sort   []string `json:"sort" query:"sort"`
-	Limit  int      `json:"limit" query:"limit"`
-	Page   int      `json:"page" query:"page"`
+	Search         string   `json:"search" query:"search"`
+	Sort           []string `json:"sort" query:"sort"`
+	Limit          int      `json:"limit" query:"limit"`
+	Page           int      `json:"page" query:"page"`
+	IncludeDeleted bool     `json:"include_deleted" query:"includeDeleted"`
 }
 
 func NewPaginationPayloadFromProto(message *pb.PaginationRequest) *PaginationPayload {
 	return &PaginationPayload{
-		Search: message.GetSearch(),
-		Sort:   message.GetSort(),
-		Limit:  int(message.GetLimit()),
-		Page:   int(message.GetPage()),
+		Search:         message.GetSearch(),
+		Sort:           message.GetSort(),
+		Limit:          int(message.GetLimit()),
+		Page:           int(message.GetPage()),
+		IncludeDeleted: message.GetIncludeDeleted(),
 	}
 }
 
@@ -68,10 +70,11 @@ func NewPaginationPayload() *PaginationPayload {
 
 func (m *PaginationPayload) ToProto() *pb.PaginationRequest {
 	return &pb.PaginationRequest{
-		Search: m.Search,
-		Sort:   m.Sort,
-		Limit:  int64(m.Limit),
-		Page:   int64(m.Page),
+		Search:         m.Search,
+		Sort:           m.Sort,
+		Limit:          int64(m.Limit),
+		Page:           int64(m.Page),
+		IncludeDeleted: m.IncludeDeleted,
 	}
 }
 
