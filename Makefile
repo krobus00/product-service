@@ -121,7 +121,7 @@ else
 endif
 
 # make changelog VERSION=vx.x.x
-changelog:
+changelog: generate
 	git-chglog -o CHANGELOG.md --next-tag $(VERSION)
 
 %:

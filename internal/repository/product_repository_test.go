@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -14,6 +16,7 @@ import (
 	"github.com/krobus00/product-service/internal/infrastructure"
 	"github.com/krobus00/product-service/internal/model"
 	"github.com/krobus00/product-service/internal/utils"
+	"github.com/opensearch-project/opensearch-go/opensearchapi"
 	"github.com/spf13/viper"
 	"gorm.io/gorm"
 )
@@ -100,7 +103,11 @@ func Test_productRepository_Create(t *testing.T) {
 				WillReturnError(tt.mockErr)
 
 			if tt.mockIndex != nil {
-				osClient.EXPECT().Index(gomock.Any(), gomock.Any(), gomock.Any()).Times(1).Return(tt.mockIndex.err)
+				stringReader := strings.NewReader("test")
+				stringReadCloser := ioutil.NopCloser(stringReader)
+				osClient.EXPECT().Index(gomock.Any(), gomock.Any(), gomock.Any()).Times(1).Return(&opensearchapi.Response{
+					Body: stringReadCloser,
+				}, tt.mockIndex.err)
 			}
 
 			if tt.wantErr {
@@ -183,7 +190,11 @@ func Test_productRepository_Update(t *testing.T) {
 				WillReturnError(tt.mockErr)
 
 			if tt.mockIndex != nil {
-				osClient.EXPECT().Index(gomock.Any(), gomock.Any(), gomock.Any()).Times(1).Return(tt.mockIndex.err)
+				stringReader := strings.NewReader("test")
+				stringReadCloser := ioutil.NopCloser(stringReader)
+				osClient.EXPECT().Index(gomock.Any(), gomock.Any(), gomock.Any()).Times(1).Return(&opensearchapi.Response{
+					Body: stringReadCloser,
+				}, tt.mockIndex.err)
 			}
 
 			if tt.wantErr {
@@ -255,7 +266,11 @@ func Test_productRepository_DeleteByID(t *testing.T) {
 				WillReturnError(tt.mockErr)
 
 			if tt.mockIndex != nil {
-				osClient.EXPECT().Index(gomock.Any(), gomock.Any(), gomock.Any()).Times(1).Return(tt.mockIndex.err)
+				stringReader := strings.NewReader("test")
+				stringReadCloser := ioutil.NopCloser(stringReader)
+				osClient.EXPECT().Index(gomock.Any(), gomock.Any(), gomock.Any()).Times(1).Return(&opensearchapi.Response{
+					Body: stringReadCloser,
+				}, tt.mockIndex.err)
 			}
 
 			if tt.wantErr {
