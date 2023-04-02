@@ -1,8 +1,22 @@
 
 <a name="v0.2.0"></a>
-## v0.2.0
+## [v0.2.0](https://github.com/krobus00/product-service/compare/v0.1.0...v0.2.0)
 
 > 2023-04-03
+
+### Bump
+
+* update changelog
+
+### Feature
+
+* add jetstream event handler ([#4](https://github.com/krobus00/product-service/issues/4))
+
+
+<a name="v0.1.0"></a>
+## v0.1.0
+
+> 2023-04-01
 
 ### Bump
 
@@ -11,7 +25,6 @@
 
 ### Feature
 
-* add jetstream event handler ([#4](https://github.com/krobus00/product-service/issues/4))
 * fix body close
 * implement opensearch ([#1](https://github.com/krobus00/product-service/issues/1))
 
