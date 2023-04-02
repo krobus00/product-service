@@ -2,27 +2,23 @@ package bootstrap
 
 import (
 	"context"
-	"fmt"
-	"net"
 
+	"github.com/hibiken/asynq"
 	authPB "github.com/krobus00/auth-service/pb/auth"
 	"github.com/krobus00/product-service/internal/config"
 	"github.com/krobus00/product-service/internal/infrastructure"
 	"github.com/krobus00/product-service/internal/model"
 	"github.com/krobus00/product-service/internal/repository"
-	grpcServer "github.com/krobus00/product-service/internal/transport/grpc"
+	asynqTransport "github.com/krobus00/product-service/internal/transport/asynq"
 	"github.com/krobus00/product-service/internal/usecase"
 	"github.com/krobus00/product-service/internal/utils"
-	pb "github.com/krobus00/product-service/pb/product"
 	storagePB "github.com/krobus00/storage-service/pb/storage"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/reflection"
-
-	log "github.com/sirupsen/logrus"
 )
 
-func StartServer() {
+func StartWorker() {
 	infrastructure.InitializeDBConn()
 
 	// init infra
@@ -36,6 +32,11 @@ func StartServer() {
 	utils.ContinueOrFatal(err)
 
 	nc, js, err := infrastructure.NewJetstreamClient()
+	utils.ContinueOrFatal(err)
+
+	asynqClient, err := infrastructure.NewAsynqClient()
+	utils.ContinueOrFatal(err)
+	asynqServer, err := infrastructure.NewAsynqServer()
 	utils.ContinueOrFatal(err)
 
 	// init grpc client
@@ -68,45 +69,50 @@ func StartServer() {
 	utils.ContinueOrFatal(err)
 	err = productUsecase.InjectJetstreamClient(js)
 	utils.ContinueOrFatal(err)
+	err = productUsecase.InjectAsynqClient(asynqClient)
+	utils.ContinueOrFatal(err)
 
 	// init stream
-	publisherUsecase := []model.PublisherUsecase{
+	consumerUsecase := []model.ConsumerUsecase{
 		productUsecase,
 	}
 
-	for _, uc := range publisherUsecase {
-		err = uc.CreateStream()
-		utils.ContinueOrFatal(err)
+	for _, uc := range consumerUsecase {
+		go func(uc model.ConsumerUsecase) {
+			err = uc.ConsumeEvent()
+			utils.ContinueOrFatal(err)
+		}(uc)
 	}
 
-	// init grpc
-	grpcDelivery := grpcServer.NewDelivery()
-	err = grpcDelivery.InjectProductUsecase(productUsecase)
+	// init asnyq
+	mux := asynq.NewServeMux()
+	asynqDelivery := asynqTransport.NewDelivery()
+	err = asynqDelivery.InjectProductUsecase(productUsecase)
+	utils.ContinueOrFatal(err)
+	err = asynqDelivery.InjectAsynqMux(mux)
 	utils.ContinueOrFatal(err)
 
-	productGrpcServer := grpc.NewServer()
+	err = asynqDelivery.InitRoutes()
+	utils.ContinueOrFatal(err)
 
-	pb.RegisterProductServiceServer(productGrpcServer, grpcDelivery)
-	if config.Env() == "development" {
-		reflection.Register(productGrpcServer)
+	if err := asynqServer.Run(mux); err != nil {
+		logrus.Fatalf("could not run asynq server: %v", err)
 	}
-	lis, _ := net.Listen("tcp", ":"+config.GRPCport())
-
-	go func() {
-		_ = productGrpcServer.Serve(lis)
-	}()
-	log.Info(fmt.Sprintf("grpc server started on :%s", config.GRPCport()))
 
 	wait := gracefulShutdown(context.Background(), config.GracefulShutdownTimeOut(), map[string]operation{
 		"database connection": func(ctx context.Context) error {
 			infrastructure.StopTickerCh <- true
 			return db.Close()
 		},
-		"grpc": func(ctx context.Context) error {
-			return lis.Close()
-		},
 		"nats connection": func(ctx context.Context) error {
 			return nc.Drain()
+		},
+		"asynq client connection": func(ctx context.Context) error {
+			return asynqClient.Close()
+		},
+		"asynq server connection": func(ctx context.Context) error {
+			asynqServer.Shutdown()
+			return asynqClient.Close()
 		},
 	})
 

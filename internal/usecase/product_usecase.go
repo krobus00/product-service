@@ -4,11 +4,13 @@ import (
 	"context"
 	"sync"
 
+	"github.com/hibiken/asynq"
 	authPB "github.com/krobus00/auth-service/pb/auth"
 	"github.com/krobus00/product-service/internal/constant"
 	"github.com/krobus00/product-service/internal/model"
 	storagePB "github.com/krobus00/storage-service/pb/storage"
-	log "github.com/sirupsen/logrus"
+	"github.com/nats-io/nats.go"
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -17,6 +19,8 @@ type productUsecase struct {
 	productRepo   model.ProductRepository
 	authClient    authPB.AuthServiceClient
 	storageClient storagePB.StorageServiceClient
+	jsClient      nats.JetStreamContext
+	asynqClient   *asynq.Client
 }
 
 func NewProductUsecase() model.ProductUsecase {
@@ -26,7 +30,7 @@ func NewProductUsecase() model.ProductUsecase {
 func (uc *productUsecase) Create(ctx context.Context, payload *model.CreateProductPayload) (*model.Product, error) {
 	userID := getUserIDFromCtx(ctx)
 
-	logger := log.WithFields(log.Fields{
+	logger := logrus.WithFields(logrus.Fields{
 		"userID": userID,
 	})
 
@@ -70,7 +74,7 @@ func (uc *productUsecase) Create(ctx context.Context, payload *model.CreateProdu
 func (uc *productUsecase) Update(ctx context.Context, payload *model.UpdateProductPayload) (*model.Product, error) {
 	userID := getUserIDFromCtx(ctx)
 
-	logger := log.WithFields(log.Fields{
+	logger := logrus.WithFields(logrus.Fields{
 		"userID": userID,
 	})
 
@@ -122,7 +126,7 @@ func (uc *productUsecase) Update(ctx context.Context, payload *model.UpdateProdu
 func (uc *productUsecase) Delete(ctx context.Context, id string) error {
 	userID := getUserIDFromCtx(ctx)
 
-	logger := log.WithFields(log.Fields{
+	logger := logrus.WithFields(logrus.Fields{
 		"userID":    userID,
 		"productID": id,
 	})
@@ -158,13 +162,13 @@ func (uc *productUsecase) Delete(ctx context.Context, id string) error {
 
 func (uc *productUsecase) FindPaginatedIDs(ctx context.Context, req *model.PaginationPayload) (*model.PaginationResponse, error) {
 	var (
-		ids        = make([]string, 0)
-		count      = int64(0)
+		ids        []string
+		count      int64
 		userID     = getUserIDFromCtx(ctx)
 		dataSource = getDataSource(ctx)
 	)
 
-	logger := log.WithFields(log.Fields{
+	logger := logrus.WithFields(logrus.Fields{
 		"userID": userID,
 		"search": req.Search,
 		"sort":   req.Sort,
@@ -204,7 +208,7 @@ func (uc *productUsecase) FindPaginatedIDs(ctx context.Context, req *model.Pagin
 func (uc *productUsecase) FindByID(ctx context.Context, id string) (*model.Product, error) {
 	userID := getUserIDFromCtx(ctx)
 
-	logger := log.WithFields(log.Fields{
+	logger := logrus.WithFields(logrus.Fields{
 		"userID":    userID,
 		"productID": id,
 	})
@@ -233,7 +237,7 @@ func (uc *productUsecase) FindByID(ctx context.Context, id string) (*model.Produ
 func (uc *productUsecase) FindByIDs(ctx context.Context, ids []string) (model.Products, error) {
 	userID := getUserIDFromCtx(ctx)
 
-	logger := log.WithFields(log.Fields{
+	logger := logrus.WithFields(logrus.Fields{
 		"userID":     userID,
 		"productIDs": ids,
 	})
@@ -256,7 +260,7 @@ func (uc *productUsecase) FindByIDs(ctx context.Context, ids []string) (model.Pr
 	for _, productID := range ids {
 		go func(id string) {
 			defer wg.Done()
-			logger := logger.WithFields(log.Fields{
+			logger := logger.WithFields(logrus.Fields{
 				"userID":    userID,
 				"productID": id,
 			})

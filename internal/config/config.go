@@ -9,6 +9,27 @@ import (
 	"github.com/spf13/viper"
 )
 
+var (
+	serviceName    = ""
+	serviceVersion = ""
+)
+
+func ServiceName() string {
+	return serviceName
+}
+
+func ServiceVersion() string {
+	return serviceVersion
+}
+
+func DurableID() string {
+	return fmt.Sprintf("%s-durable", serviceName)
+}
+
+func QueueGroup() string {
+	return fmt.Sprintf("%s-queue-group", serviceName)
+}
+
 func Env() string {
 	return viper.GetString("env")
 }
@@ -133,6 +154,45 @@ func RedisReadTimeout() time.Duration {
 func RedisCacheTTL() time.Duration {
 	cfg := viper.GetString("cache_ttl")
 	return parseDuration(cfg, DefaultRedisCacheTTL)
+}
+
+func RedisAsynqHost() string {
+	return viper.GetString("redis.asynq_host")
+}
+
+func AsynqConcurrency() int {
+	if viper.GetInt("asynq.concurrency") <= 0 {
+		return DefaultAsynqConcurrency
+	}
+	return viper.GetInt("asynq.concurrency")
+}
+
+func AsynqRetry() int {
+	if viper.GetInt("asynq.retry") <= 0 {
+		return DefaultAsynqRetry
+	}
+	return viper.GetInt("asynq.retry")
+}
+
+func AsynqRetention() time.Duration {
+	cfg := viper.GetString("asynq.retention")
+	return parseDuration(cfg, DefaultAsynqRetention)
+}
+
+func JetstreamHost() string {
+	return viper.GetString("js.host")
+}
+
+func JetstreamMaxPending() int {
+	if viper.GetInt("js.max_pending") <= 0 {
+		return DefaultJetstreamMaxPending
+	}
+	return viper.GetInt("js.max_pending")
+}
+
+func JetstreamMaxAge() time.Duration {
+	cfg := viper.GetString("js.max_age")
+	return parseDuration(cfg, DefaultJetstreamMaxAge)
 }
 
 func OpensearchHost() []string {

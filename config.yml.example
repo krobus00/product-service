@@ -1,0 +1,38 @@
+env: "development"
+log_level: "info" # info|warm|error
+ports:
+  grpc: "5002"
+database:
+  host: "localhost:5432"
+  database: "product_service"
+  username: "root"
+  password: 'strongpsword'
+  sslmode: "disable"
+  max_idle_conns: 2
+  conn_max_lifetime: "1h"
+  ping_interval: "5s"
+  retry_attempts: 3
+redis:
+  cache_host: "redis://:WPpJFYGPV1@localhost:6379/2"
+  asynq_host: "redis://:WPpJFYGPV1@localhost:6379/3"
+  dial_timeout: "5s"
+  write_timeout: "10s"
+  read_timeout: "10s"
+  disable_caching: false
+opensearch:
+  host:
+    - "https://localhost:9200"
+  username: "admin"
+  password: "admin"
+  insecure: true
+asynq:
+  concurrency: 10
+  retry: 3
+  retention: "15m"
+js:
+  host: "nats://127.0.0.1:4222"
+  max_pending: 256
+  max_age: "24h"
+services:
+  auth_grpc: "localhost:5000"
+  storage_grpc: "localhost:5001"
