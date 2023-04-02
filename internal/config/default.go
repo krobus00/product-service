@@ -18,4 +18,11 @@ const (
 	DefaultRedisWriteTimeout = 2 * time.Second
 	DefaultRedisReadTimeout  = 2 * time.Second
 	DefaultRedisCacheTTL     = 15 * time.Minute
+
+	DefaultJetstreamMaxPending = 256
+	DefaultJetstreamMaxAge     = 24 * time.Hour
+
+	DefaultAsynqConcurrency = 10
+	DefaultAsynqRetry       = 3
+	DefaultAsynqRetention   = 15 * time.Minute
 )

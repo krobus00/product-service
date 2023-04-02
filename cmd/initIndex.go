@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// initIndexCmd represents the initIndex command
+// initIndexCmd represents the initIndex command.
 var initIndexCmd = &cobra.Command{
 	Use:   "init-index",
 	Short: "init opensearch index",

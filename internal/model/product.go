@@ -10,20 +10,27 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/hibiken/asynq"
 	authPB "github.com/krobus00/auth-service/pb/auth"
 	kit "github.com/krobus00/krokit"
 	"github.com/krobus00/product-service/internal/utils"
 	pb "github.com/krobus00/product-service/pb/product"
 	storagePB "github.com/krobus00/storage-service/pb/storage"
+	"github.com/nats-io/nats.go"
 	"gorm.io/gorm"
 )
 
 const (
+	ProductStreamName              = "PRODUCTS"
+	ProductStreamSubjects          = "PRODUCTS.*"
+	ProductThumbnailDeletedSubject = "PRODUCTS.thumbnailDeleted"
+
 	OSProductIndex              = "products"
 	OSProductAnalyzer           = "my_analyzer"
 	OSProductMinimumShouldMatch = "50%"
 
-	ThumbnailType = string("IMAGE")
+	ThumbnailType    = "IMAGE"
+	DefaultThumbnail = "PRODUCT_THUMBNAIL"
 )
 
 var (
@@ -60,6 +67,12 @@ func NewProductCacheKey(id string) string {
 func GetProductCacheKeys(id string) []string {
 	return []string{
 		NewProductCacheKey(id),
+	}
+}
+
+func GetUpdateAllThumbnailCacheKeys() []string {
+	return []string{
+		"products:*",
 	}
 }
 
@@ -190,6 +203,7 @@ type ProductRepository interface {
 	DeleteByID(ctx context.Context, id string) error
 	FindPaginatedIDs(ctx context.Context, req *PaginationPayload) (ids []string, count int64, err error)
 	FindOSPaginatedIDs(ctx context.Context, req *PaginationPayload) (ids []string, count int64, err error)
+	UpdateAllThumbnail(ctx context.Context, oldThumbnailID string, newThumbnailID string) error
 
 	// Resolver
 	FindByID(ctx context.Context, id string) (*Product, error)
@@ -215,4 +229,13 @@ type ProductUsecase interface {
 	InjectProductRepo(repo ProductRepository) error
 	InjectAuthClient(client authPB.AuthServiceClient) error
 	InjectStorageClient(client storagePB.StorageServiceClient) error
+	InjectJetstreamClient(client nats.JetStreamContext) error
+	InjectAsynqClient(client *asynq.Client) error
+
+	// Jetstream
+	CreateStream() error
+	ConsumeEvent() error
+
+	// Asynq handler
+	HandleUpdateThumbnailTask(ctx context.Context, t *asynq.Task) error
 }

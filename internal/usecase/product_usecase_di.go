@@ -3,9 +3,11 @@ package usecase
 import (
 	"errors"
 
+	"github.com/hibiken/asynq"
 	authPB "github.com/krobus00/auth-service/pb/auth"
 	"github.com/krobus00/product-service/internal/model"
 	storagePB "github.com/krobus00/storage-service/pb/storage"
+	"github.com/nats-io/nats.go"
 	"gorm.io/gorm"
 )
 
@@ -38,5 +40,21 @@ func (uc *productUsecase) InjectStorageClient(client storagePB.StorageServiceCli
 		return errors.New("invalid storage client")
 	}
 	uc.storageClient = client
+	return nil
+}
+
+func (uc *productUsecase) InjectJetstreamClient(client nats.JetStreamContext) error {
+	if client == nil {
+		return errors.New("invalid jetstream client")
+	}
+	uc.jsClient = client
+	return nil
+}
+
+func (uc *productUsecase) InjectAsynqClient(client *asynq.Client) error {
+	if client == nil {
+		return errors.New("invalid asynq client")
+	}
+	uc.asynqClient = client
 	return nil
 }

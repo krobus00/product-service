@@ -168,3 +168,17 @@ func (mr *MockProductRepositoryMockRecorder) Update(arg0, arg1 interface{}) *gom
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockProductRepository)(nil).Update), arg0, arg1)
 }
+
+// UpdateAllThumbnail mocks base method.
+func (m *MockProductRepository) UpdateAllThumbnail(arg0 context.Context, arg1, arg2 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateAllThumbnail", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateAllThumbnail indicates an expected call of UpdateAllThumbnail.
+func (mr *MockProductRepositoryMockRecorder) UpdateAllThumbnail(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAllThumbnail", reflect.TypeOf((*MockProductRepository)(nil).UpdateAllThumbnail), arg0, arg1, arg2)
+}
