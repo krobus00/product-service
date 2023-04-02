@@ -9,9 +9,11 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
+	asynq "github.com/hibiken/asynq"
 	auth "github.com/krobus00/auth-service/pb/auth"
 	model "github.com/krobus00/product-service/internal/model"
 	storage "github.com/krobus00/storage-service/pb/storage"
+	nats "github.com/nats-io/nats.go"
 	gorm "gorm.io/gorm"
 )
 
@@ -38,6 +40,20 @@ func (m *MockProductUsecase) EXPECT() *MockProductUsecaseMockRecorder {
 	return m.recorder
 }
 
+// ConsumeEvent mocks base method.
+func (m *MockProductUsecase) ConsumeEvent() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ConsumeEvent")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ConsumeEvent indicates an expected call of ConsumeEvent.
+func (mr *MockProductUsecaseMockRecorder) ConsumeEvent() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConsumeEvent", reflect.TypeOf((*MockProductUsecase)(nil).ConsumeEvent))
+}
+
 // Create mocks base method.
 func (m *MockProductUsecase) Create(arg0 context.Context, arg1 *model.CreateProductPayload) (*model.Product, error) {
 	m.ctrl.T.Helper()
@@ -51,6 +67,20 @@ func (m *MockProductUsecase) Create(arg0 context.Context, arg1 *model.CreateProd
 func (mr *MockProductUsecaseMockRecorder) Create(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockProductUsecase)(nil).Create), arg0, arg1)
+}
+
+// CreateStream mocks base method.
+func (m *MockProductUsecase) CreateStream() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateStream")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateStream indicates an expected call of CreateStream.
+func (mr *MockProductUsecaseMockRecorder) CreateStream() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateStream", reflect.TypeOf((*MockProductUsecase)(nil).CreateStream))
 }
 
 // Delete mocks base method.
@@ -112,6 +142,34 @@ func (mr *MockProductUsecaseMockRecorder) FindPaginatedIDs(arg0, arg1 interface{
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindPaginatedIDs", reflect.TypeOf((*MockProductUsecase)(nil).FindPaginatedIDs), arg0, arg1)
 }
 
+// HandleUpdateThumbnailTask mocks base method.
+func (m *MockProductUsecase) HandleUpdateThumbnailTask(arg0 context.Context, arg1 *asynq.Task) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HandleUpdateThumbnailTask", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// HandleUpdateThumbnailTask indicates an expected call of HandleUpdateThumbnailTask.
+func (mr *MockProductUsecaseMockRecorder) HandleUpdateThumbnailTask(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HandleUpdateThumbnailTask", reflect.TypeOf((*MockProductUsecase)(nil).HandleUpdateThumbnailTask), arg0, arg1)
+}
+
+// InjectAsynqClient mocks base method.
+func (m *MockProductUsecase) InjectAsynqClient(arg0 *asynq.Client) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InjectAsynqClient", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// InjectAsynqClient indicates an expected call of InjectAsynqClient.
+func (mr *MockProductUsecaseMockRecorder) InjectAsynqClient(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InjectAsynqClient", reflect.TypeOf((*MockProductUsecase)(nil).InjectAsynqClient), arg0)
+}
+
 // InjectAuthClient mocks base method.
 func (m *MockProductUsecase) InjectAuthClient(arg0 auth.AuthServiceClient) error {
 	m.ctrl.T.Helper()
@@ -138,6 +196,20 @@ func (m *MockProductUsecase) InjectDB(arg0 *gorm.DB) error {
 func (mr *MockProductUsecaseMockRecorder) InjectDB(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InjectDB", reflect.TypeOf((*MockProductUsecase)(nil).InjectDB), arg0)
+}
+
+// InjectJetstreamClient mocks base method.
+func (m *MockProductUsecase) InjectJetstreamClient(arg0 nats.JetStreamContext) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InjectJetstreamClient", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// InjectJetstreamClient indicates an expected call of InjectJetstreamClient.
+func (mr *MockProductUsecaseMockRecorder) InjectJetstreamClient(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InjectJetstreamClient", reflect.TypeOf((*MockProductUsecase)(nil).InjectJetstreamClient), arg0)
 }
 
 // InjectProductRepo mocks base method.

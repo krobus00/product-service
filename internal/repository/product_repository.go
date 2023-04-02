@@ -258,7 +258,7 @@ func (r *productRepository) FindOSPaginatedIDs(ctx context.Context, req *model.P
 	}
 	defer res.Body.Close()
 
-	OSProducts := new(model.OSPaginationResponse[model.Product])
+	osProducts := new(model.OSPaginationResponse[model.Product])
 
 	bytes, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -266,15 +266,37 @@ func (r *productRepository) FindOSPaginatedIDs(ctx context.Context, req *model.P
 		return productIds, count, err
 	}
 
-	err = json.Unmarshal(bytes, &OSProducts)
+	err = json.Unmarshal(bytes, &osProducts)
 	if err != nil {
 		logger.Error(err.Error())
 		return productIds, count, err
 	}
 
-	for _, hit := range OSProducts.Hits.Hits {
+	for _, hit := range osProducts.Hits.Hits {
 		productIds = append(productIds, hit.Source.ID)
 	}
 
-	return productIds, OSProducts.GetCount(), nil
+	return productIds, osProducts.GetCount(), nil
+}
+
+func (r *productRepository) UpdateAllThumbnail(ctx context.Context, oldThumbnailID string, newThumbnailID string) error {
+	logger := log.WithFields(log.Fields{
+		"oldThumbnailID": oldThumbnailID,
+		"newThumbnailID": newThumbnailID,
+	})
+
+	db := utils.GetTxFromContext(ctx, r.db)
+
+	err := db.WithContext(ctx).
+		Model(&model.Product{}).
+		Where("thumbnail_id = ?", oldThumbnailID).
+		Updates(model.Product{ThumbnailID: newThumbnailID, UpdatedAt: time.Now()}).Error
+	if err != nil {
+		logger.Error(err.Error())
+		return err
+	}
+
+	_ = DeleteByKeys(ctx, r.redisClient, model.GetUpdateAllThumbnailCacheKeys())
+
+	return nil
 }

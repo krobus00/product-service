@@ -47,8 +47,8 @@ type Exists struct {
 	Field string `json:"field"`
 }
 
-// -created_at = created_at desc
-// +created_at = created_at asc
+// -created_at = created_at desc.
+// +created_at = created_at asc.
 type Sort struct {
 	Order string `json:"order"`
 }

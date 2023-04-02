@@ -26,9 +26,10 @@ func Execute() {
 	}
 }
 
-func Init(name, version string) {
-	log.Info(fmt.Sprintf("starting %s:%s ...", name, version))
+func Init() {
 	if err := config.LoadConfig(); err != nil {
 		log.Fatalln(err.Error())
 	}
+
+	log.Info(fmt.Sprintf("starting %s:%s...", config.ServiceName(), config.ServiceVersion()))
 }
