@@ -1,0 +1,16 @@
+app:
+  name: product-service
+  group: app
+  replicaCount: 1
+  container:
+    image: krobus00/product-service
+    version: v0.1.1
+    ports:
+      http: 3002
+      grpc: 5002
+      metrics: 7000
+  service:
+    type: ClusterIP
+    httpPort: 9082
+    grpcPort: 9182
+    metricsPort: 7000
