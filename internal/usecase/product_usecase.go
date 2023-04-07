@@ -8,6 +8,7 @@ import (
 	authPB "github.com/krobus00/auth-service/pb/auth"
 	"github.com/krobus00/product-service/internal/constant"
 	"github.com/krobus00/product-service/internal/model"
+	"github.com/krobus00/product-service/internal/utils"
 	storagePB "github.com/krobus00/storage-service/pb/storage"
 	"github.com/nats-io/nats.go"
 	"github.com/sirupsen/logrus"
@@ -28,6 +29,10 @@ func NewProductUsecase() model.ProductUsecase {
 }
 
 func (uc *productUsecase) Create(ctx context.Context, payload *model.CreateProductPayload) (*model.Product, error) {
+	_, _, fn := utils.Trace()
+	ctx, span := utils.NewSpan(ctx, fn)
+	defer span.End()
+
 	userID := getUserIDFromCtx(ctx)
 
 	logger := logrus.WithFields(logrus.Fields{
@@ -72,6 +77,10 @@ func (uc *productUsecase) Create(ctx context.Context, payload *model.CreateProdu
 }
 
 func (uc *productUsecase) Update(ctx context.Context, payload *model.UpdateProductPayload) (*model.Product, error) {
+	_, _, fn := utils.Trace()
+	ctx, span := utils.NewSpan(ctx, fn)
+	defer span.End()
+
 	userID := getUserIDFromCtx(ctx)
 
 	logger := logrus.WithFields(logrus.Fields{
@@ -124,6 +133,10 @@ func (uc *productUsecase) Update(ctx context.Context, payload *model.UpdateProdu
 }
 
 func (uc *productUsecase) Delete(ctx context.Context, id string) error {
+	_, _, fn := utils.Trace()
+	ctx, span := utils.NewSpan(ctx, fn)
+	defer span.End()
+
 	userID := getUserIDFromCtx(ctx)
 
 	logger := logrus.WithFields(logrus.Fields{
@@ -161,6 +174,10 @@ func (uc *productUsecase) Delete(ctx context.Context, id string) error {
 }
 
 func (uc *productUsecase) FindPaginatedIDs(ctx context.Context, req *model.PaginationPayload) (*model.PaginationResponse, error) {
+	_, _, fn := utils.Trace()
+	ctx, span := utils.NewSpan(ctx, fn)
+	defer span.End()
+
 	var (
 		ids        []string
 		count      int64
@@ -206,6 +223,10 @@ func (uc *productUsecase) FindPaginatedIDs(ctx context.Context, req *model.Pagin
 }
 
 func (uc *productUsecase) FindByID(ctx context.Context, id string) (*model.Product, error) {
+	_, _, fn := utils.Trace()
+	ctx, span := utils.NewSpan(ctx, fn)
+	defer span.End()
+
 	userID := getUserIDFromCtx(ctx)
 
 	logger := logrus.WithFields(logrus.Fields{
@@ -235,6 +256,10 @@ func (uc *productUsecase) FindByID(ctx context.Context, id string) (*model.Produ
 }
 
 func (uc *productUsecase) FindByIDs(ctx context.Context, ids []string) (model.Products, error) {
+	_, _, fn := utils.Trace()
+	ctx, span := utils.NewSpan(ctx, fn)
+	defer span.End()
+
 	userID := getUserIDFromCtx(ctx)
 
 	logger := logrus.WithFields(logrus.Fields{
@@ -287,6 +312,10 @@ func (uc *productUsecase) FindByIDs(ctx context.Context, ids []string) (model.Pr
 }
 
 func (uc *productUsecase) hasAccess(ctx context.Context, permissions []string, object *model.Product) error {
+	_, _, fn := utils.Trace()
+	ctx, span := utils.NewSpan(ctx, fn)
+	defer span.End()
+
 	userID := getUserIDFromCtx(ctx)
 
 	if object.OwnerID == userID {

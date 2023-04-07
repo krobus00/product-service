@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"net/http"
 
 	authPB "github.com/krobus00/auth-service/pb/auth"
 	"github.com/krobus00/product-service/internal/config"
@@ -15,11 +16,12 @@ import (
 	"github.com/krobus00/product-service/internal/utils"
 	pb "github.com/krobus00/product-service/pb/product"
 	storagePB "github.com/krobus00/storage-service/pb/storage"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 func StartServer() {
@@ -36,6 +38,9 @@ func StartServer() {
 	utils.ContinueOrFatal(err)
 
 	nc, js, err := infrastructure.NewJetstreamClient()
+	utils.ContinueOrFatal(err)
+
+	tp, err := infrastructure.JaegerTraceProvider()
 	utils.ContinueOrFatal(err)
 
 	// init grpc client
@@ -90,12 +95,19 @@ func StartServer() {
 	if config.Env() == "development" {
 		reflection.Register(productGrpcServer)
 	}
-	lis, _ := net.Listen("tcp", ":"+config.GRPCport())
+	lis, _ := net.Listen("tcp", ":"+config.PortGRPC())
 
 	go func() {
 		_ = productGrpcServer.Serve(lis)
 	}()
-	log.Info(fmt.Sprintf("grpc server started on :%s", config.GRPCport()))
+	logrus.Info(fmt.Sprintf("grpc server started on :%s", config.PortGRPC()))
+
+	http.Handle("/metrics", promhttp.Handler())
+
+	go func() {
+		_ = http.ListenAndServe(fmt.Sprintf(":%s", config.PortMetrics()), nil)
+	}()
+	logrus.Info(fmt.Sprintf("metrics server started on :%s", config.PortMetrics()))
 
 	wait := gracefulShutdown(context.Background(), config.GracefulShutdownTimeOut(), map[string]operation{
 		"database connection": func(ctx context.Context) error {
@@ -107,6 +119,9 @@ func StartServer() {
 		},
 		"nats connection": func(ctx context.Context) error {
 			return nc.Drain()
+		},
+		"trace provider": func(ctx context.Context) error {
+			return tp.Shutdown(ctx)
 		},
 	})
 

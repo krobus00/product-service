@@ -163,7 +163,7 @@ func Test_productUsecase_Create(t *testing.T) {
 			utils.ContinueOrFatal(err)
 
 			if tt.mockAuth != nil {
-				mockAuthClient.EXPECT().HasAccess(ctx, gomock.Any()).Times(1).Return(&wrapperspb.BoolValue{
+				mockAuthClient.EXPECT().HasAccess(gomock.Any(), gomock.Any()).Times(1).Return(&wrapperspb.BoolValue{
 					Value: tt.mockAuth.hasAccess,
 				}, tt.mockAuth.err)
 			}
@@ -174,7 +174,7 @@ func Test_productUsecase_Create(t *testing.T) {
 			}
 
 			if tt.mockGetObjectByID != nil {
-				mockStorageClient.EXPECT().GetObjectByID(ctx, &storagePB.GetObjectByIDRequest{
+				mockStorageClient.EXPECT().GetObjectByID(gomock.Any(), &storagePB.GetObjectByIDRequest{
 					UserId:   tt.userID,
 					ObjectId: tt.args.payload.ThumbnailID,
 				}).Times(1).Return(tt.mockGetObjectByID.res, tt.mockGetObjectByID.err)
@@ -507,25 +507,25 @@ func Test_productUsecase_Update(t *testing.T) {
 
 			if tt.mockAuth != nil {
 				mockAuthClient.EXPECT().
-					HasAccess(ctx, gomock.Any()).
+					HasAccess(gomock.Any(), gomock.Any()).
 					Times(1).Return(&wrapperspb.BoolValue{
 					Value: tt.mockAuth.hasAccess,
 				}, tt.mockAuth.err)
 			}
 
 			if tt.mockSelect != nil {
-				mockProductRepo.EXPECT().FindByID(ctx, tt.args.payload.ID).Times(1).Return(tt.mockSelect.product, tt.mockSelect.err)
+				mockProductRepo.EXPECT().FindByID(gomock.Any(), tt.args.payload.ID).Times(1).Return(tt.mockSelect.product, tt.mockSelect.err)
 			}
 
 			if tt.mockGetObjectByID != nil {
-				mockStorageClient.EXPECT().GetObjectByID(ctx, &storagePB.GetObjectByIDRequest{
+				mockStorageClient.EXPECT().GetObjectByID(gomock.Any(), &storagePB.GetObjectByIDRequest{
 					UserId:   tt.userID,
 					ObjectId: tt.args.payload.ThumbnailID,
 				}).Times(1).Return(tt.mockGetObjectByID.res, tt.mockGetObjectByID.err)
 			}
 
 			if tt.mockUpdate != nil {
-				mockProductRepo.EXPECT().Update(ctx, tt.mockUpdate.product).Times(1).Return(tt.mockUpdate.err)
+				mockProductRepo.EXPECT().Update(gomock.Any(), tt.mockUpdate.product).Times(1).Return(tt.mockUpdate.err)
 			}
 
 			got, err := uc.Update(ctx, tt.args.payload)
@@ -689,16 +689,16 @@ func Test_productUsecase_Delete(t *testing.T) {
 			utils.ContinueOrFatal(err)
 
 			if tt.mockSelect != nil {
-				mockProductRepo.EXPECT().FindByID(ctx, tt.args.id).Times(1).Return(tt.mockSelect.product, tt.mockSelect.err)
+				mockProductRepo.EXPECT().FindByID(gomock.Any(), tt.args.id).Times(1).Return(tt.mockSelect.product, tt.mockSelect.err)
 				if tt.mockAuth != nil && tt.mockSelect.product.OwnerID != tt.userID {
-					mockAuthClient.EXPECT().HasAccess(ctx, gomock.Any()).Times(1).Return(&wrapperspb.BoolValue{
+					mockAuthClient.EXPECT().HasAccess(gomock.Any(), gomock.Any()).Times(1).Return(&wrapperspb.BoolValue{
 						Value: tt.mockAuth.hasAccess,
 					}, tt.mockAuth.err)
 				}
 			}
 
 			if tt.mockDelete != nil {
-				mockProductRepo.EXPECT().DeleteByID(ctx, tt.args.id).Times(1).Return(tt.mockDelete.err)
+				mockProductRepo.EXPECT().DeleteByID(gomock.Any(), tt.args.id).Times(1).Return(tt.mockDelete.err)
 			}
 
 			if err := uc.Delete(ctx, tt.args.id); (err != nil) != tt.wantErr {
@@ -833,13 +833,13 @@ func Test_productUsecase_FindPaginatedIDs(t *testing.T) {
 			utils.ContinueOrFatal(err)
 
 			if tt.mockAuth != nil {
-				mockAuthClient.EXPECT().HasAccess(ctx, gomock.Any()).Times(1).Return(&wrapperspb.BoolValue{
+				mockAuthClient.EXPECT().HasAccess(gomock.Any(), gomock.Any()).Times(1).Return(&wrapperspb.BoolValue{
 					Value: tt.mockAuth.hasAccess,
 				}, tt.mockAuth.err)
 			}
 
 			if tt.mockFindPaginatedIDs != nil {
-				mockProductRepo.EXPECT().FindPaginatedIDs(ctx, tt.args.req).Times(1).Return(tt.mockFindPaginatedIDs.ids, tt.mockFindPaginatedIDs.count, tt.mockFindPaginatedIDs.err)
+				mockProductRepo.EXPECT().FindPaginatedIDs(gomock.Any(), tt.args.req).Times(1).Return(tt.mockFindPaginatedIDs.ids, tt.mockFindPaginatedIDs.count, tt.mockFindPaginatedIDs.err)
 			}
 
 			got, err := uc.FindPaginatedIDs(ctx, tt.args.req)
@@ -960,13 +960,13 @@ func Test_productUsecase_FindByID(t *testing.T) {
 			utils.ContinueOrFatal(err)
 
 			if tt.mockAuth != nil {
-				mockAuthClient.EXPECT().HasAccess(ctx, gomock.Any()).Times(1).Return(&wrapperspb.BoolValue{
+				mockAuthClient.EXPECT().HasAccess(gomock.Any(), gomock.Any()).Times(1).Return(&wrapperspb.BoolValue{
 					Value: tt.mockAuth.hasAccess,
 				}, tt.mockAuth.err)
 			}
 
 			if tt.mockFindByID != nil {
-				mockProductRepo.EXPECT().FindByID(ctx, tt.args.id).Times(1).Return(tt.mockFindByID.product, tt.mockFindByID.err)
+				mockProductRepo.EXPECT().FindByID(gomock.Any(), tt.args.id).Times(1).Return(tt.mockFindByID.product, tt.mockFindByID.err)
 			}
 
 			got, err := uc.FindByID(ctx, tt.args.id)
@@ -1090,14 +1090,14 @@ func Test_productUsecase_FindByIDs(t *testing.T) {
 
 			wg := sync.WaitGroup{}
 			if tt.mockAuth != nil {
-				mockAuthClient.EXPECT().HasAccess(ctx, gomock.Any()).Times(1).Return(&wrapperspb.BoolValue{
+				mockAuthClient.EXPECT().HasAccess(gomock.Any(), gomock.Any()).Times(1).Return(&wrapperspb.BoolValue{
 					Value: tt.mockAuth.hasAccess,
 				}, tt.mockAuth.err)
 			}
 
 			if tt.mockFindByID != nil {
 				wg.Add(1)
-				mockProductRepo.EXPECT().FindByID(ctx, tt.args.ids[0]).Times(1).DoAndReturn(func(_ context.Context, id string) (*model.Product, error) {
+				mockProductRepo.EXPECT().FindByID(gomock.Any(), tt.args.ids[0]).Times(1).DoAndReturn(func(_ context.Context, id string) (*model.Product, error) {
 					defer wg.Done()
 					return tt.mockFindByID.product, tt.mockFindByID.err
 				})
