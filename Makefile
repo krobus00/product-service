@@ -62,11 +62,11 @@ else ifeq (server, $(filter server,$(MAKECMDGOALS)))
 	$(eval launch_args=server $(launch_args))
 	$(shell if test -s ./bin/product-service; then ./bin/product-service $(launch_args); else echo product binary not found; fi)
 else ifeq (migration, $(filter migration,$(MAKECMDGOALS)))
-	$(shell if ! test -s ./bin/auth-service; then go build -ldflags "-s -w -X main.version=$(VERSION) -X main.name=$(SERVICE_NAME)"  -o ./bin/product-service ./main.go; fi)
+	$(shell if ! test -s ./bin/product-service; then go build -ldflags "-s -w -X main.version=$(VERSION) -X main.name=$(SERVICE_NAME)"  -o ./bin/product-service ./main.go; fi)
 	$(eval launch_args=migration --action $(MIGRATION_ACTION) --name $(MIGRATION_NAME) --step $(MIGRATION_STEP) $(launch_args))
 	./bin/product-service $(launch_args)
 else ifeq (init-index, $(filter init-index,$(MAKECMDGOALS)))
-	$(shell if ! test -s ./bin/auth-service; then go build -ldflags "-s -w -X main.version=$(VERSION) -X main.name=$(SERVICE_NAME)"  -o ./bin/product-service ./main.go; fi)
+	$(shell if ! test -s ./bin/product-service; then go build -ldflags "-s -w -X main.version=$(VERSION) -X main.name=$(SERVICE_NAME)"  -o ./bin/product-service ./main.go; fi)
 	$(eval launch_args=init-index $(launch_args))
 	./bin/product-service $(launch_args)
 endif
@@ -97,7 +97,7 @@ docker-build-push: image push-image
 # make deploy VERSION="vx.x.x" NAMESPACE="staging"
 # make deploy VERSION="vx.x.x" NAMESPACE="staging" CONFIG="./config-staging.yml"
 deploy:
-	@helm upgrade --install product-service ./deployments/helm/server-product-service --set-file appConfig="${CONFIG}" --set app.container.version="${VERSION}" -n ${NAMESPACE}
+	@helm upgrade --install product-service ./deployments/helm/product-service --set-file appConfig="${CONFIG}" --set app.container.version="${VERSION}" -n ${NAMESPACE}
 
 # make coverage
 coverage:
@@ -121,7 +121,7 @@ else
 endif
 
 # make changelog VERSION=vx.x.x
-changelog: generate lint
+changelog: tidy generate lint
 	git-chglog -o CHANGELOG.md --next-tag $(VERSION)
 
 %:

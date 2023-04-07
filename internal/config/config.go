@@ -38,8 +38,12 @@ func LogLevel() string {
 	return viper.GetString("log_level")
 }
 
-func GRPCport() string {
+func PortGRPC() string {
 	return viper.GetString("ports.grpc")
+}
+
+func PortMetrics() string {
+	return viper.GetString("ports.metrics")
 }
 
 func GracefulShutdownTimeOut() time.Duration {
@@ -209,6 +213,22 @@ func OpensearchPassword() string {
 
 func OpensearchInsecure() bool {
 	return viper.GetBool("opensearch.insecure")
+}
+
+func JaegerProtocol() string {
+	return viper.GetString("jaeger.protocol")
+}
+
+func JaegerHost() string {
+	return viper.GetString("jaeger.host")
+}
+
+func JaegerPort() string {
+	return viper.GetString("jaeger.port")
+}
+
+func JaegerSampleRate() float64 {
+	return viper.GetFloat64("jaeger.sample_rate")
 }
 
 func AuthGRPCHost() string {

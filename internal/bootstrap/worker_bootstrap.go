@@ -2,6 +2,8 @@ package bootstrap
 
 import (
 	"context"
+	"fmt"
+	"net/http"
 
 	"github.com/hibiken/asynq"
 	authPB "github.com/krobus00/auth-service/pb/auth"
@@ -13,6 +15,7 @@ import (
 	"github.com/krobus00/product-service/internal/usecase"
 	"github.com/krobus00/product-service/internal/utils"
 	storagePB "github.com/krobus00/storage-service/pb/storage"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -37,6 +40,9 @@ func StartWorker() {
 	asynqClient, err := infrastructure.NewAsynqClient()
 	utils.ContinueOrFatal(err)
 	asynqServer, err := infrastructure.NewAsynqServer()
+	utils.ContinueOrFatal(err)
+
+	tp, err := infrastructure.JaegerTraceProvider()
 	utils.ContinueOrFatal(err)
 
 	// init grpc client
@@ -95,6 +101,13 @@ func StartWorker() {
 	err = asynqDelivery.InitRoutes()
 	utils.ContinueOrFatal(err)
 
+	http.Handle("/metrics", promhttp.Handler())
+
+	go func() {
+		_ = http.ListenAndServe(fmt.Sprintf(":%s", config.PortMetrics()), nil)
+	}()
+	logrus.Info(fmt.Sprintf("metrics server started on :%s", config.PortMetrics()))
+
 	if err := asynqServer.Run(mux); err != nil {
 		logrus.Fatalf("could not run asynq server: %v", err)
 	}
@@ -113,6 +126,9 @@ func StartWorker() {
 		"asynq server connection": func(ctx context.Context) error {
 			asynqServer.Shutdown()
 			return asynqClient.Close()
+		},
+		"trace provider": func(ctx context.Context) error {
+			return tp.Shutdown(ctx)
 		},
 	})
 

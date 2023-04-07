@@ -28,6 +28,10 @@ func NewProductRepository() model.ProductRepository {
 }
 
 func (r *productRepository) Create(ctx context.Context, product *model.Product) error {
+	_, _, fn := utils.Trace()
+	ctx, span := utils.NewSpan(ctx, fn)
+	defer span.End()
+
 	logger := log.WithFields(log.Fields{
 		"productID":   product.ID,
 		"thumbnailID": product.ThumbnailID,
@@ -54,6 +58,10 @@ func (r *productRepository) Create(ctx context.Context, product *model.Product) 
 }
 
 func (r *productRepository) Update(ctx context.Context, product *model.Product) error {
+	_, _, fn := utils.Trace()
+	ctx, span := utils.NewSpan(ctx, fn)
+	defer span.End()
+
 	logger := log.WithFields(log.Fields{
 		"productID": product.ID,
 	})
@@ -80,6 +88,10 @@ func (r *productRepository) Update(ctx context.Context, product *model.Product) 
 }
 
 func (r *productRepository) DeleteByID(ctx context.Context, id string) error {
+	_, _, fn := utils.Trace()
+	ctx, span := utils.NewSpan(ctx, fn)
+	defer span.End()
+
 	logger := log.WithFields(log.Fields{
 		"productID": id,
 	})
@@ -108,6 +120,10 @@ func (r *productRepository) DeleteByID(ctx context.Context, id string) error {
 }
 
 func (r *productRepository) FindPaginatedIDs(ctx context.Context, req *model.PaginationPayload) (ids []string, count int64, err error) {
+	_, _, fn := utils.Trace()
+	ctx, span := utils.NewSpan(ctx, fn)
+	defer span.End()
+
 	logger := log.WithFields(log.Fields{
 		"search": req.Search,
 		"sort":   req.Sort,
@@ -141,6 +157,10 @@ func (r *productRepository) FindPaginatedIDs(ctx context.Context, req *model.Pag
 }
 
 func (r *productRepository) FindByID(ctx context.Context, id string) (*model.Product, error) {
+	_, _, fn := utils.Trace()
+	ctx, span := utils.NewSpan(ctx, fn)
+	defer span.End()
+
 	logger := log.WithFields(log.Fields{
 		"productID": id,
 	})
@@ -183,6 +203,10 @@ func (r *productRepository) FindByID(ctx context.Context, id string) (*model.Pro
 }
 
 func (r *productRepository) countPaginated(ctx context.Context, req *model.PaginationPayload) (count int64, err error) {
+	_, _, fn := utils.Trace()
+	ctx, span := utils.NewSpan(ctx, fn)
+	defer span.End()
+
 	logger := log.WithFields(log.Fields{
 		"search": req.Search,
 		"sort":   req.Sort,
@@ -207,6 +231,10 @@ func (r *productRepository) countPaginated(ctx context.Context, req *model.Pagin
 }
 
 func (r *productRepository) FindOSPaginatedIDs(ctx context.Context, req *model.PaginationPayload) (ids []string, count int64, err error) {
+	_, _, fn := utils.Trace()
+	ctx, span := utils.NewSpan(ctx, fn)
+	defer span.End()
+
 	logger := log.WithFields(log.Fields{
 		"search": req.Search,
 		"sort":   req.Sort,
@@ -280,6 +308,10 @@ func (r *productRepository) FindOSPaginatedIDs(ctx context.Context, req *model.P
 }
 
 func (r *productRepository) UpdateAllThumbnail(ctx context.Context, oldThumbnailID string, newThumbnailID string) error {
+	_, _, fn := utils.Trace()
+	ctx, span := utils.NewSpan(ctx, fn)
+	defer span.End()
+
 	logger := log.WithFields(log.Fields{
 		"oldThumbnailID": oldThumbnailID,
 		"newThumbnailID": newThumbnailID,
