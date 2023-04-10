@@ -10,3 +10,33 @@ const (
 	PermissionProductRead        = string("PRODUCT_READ")         // Only access to read product
 	PermissionProductModifyOther = string("PRODUCT_MODIFY_OTHER") // Only allow access to modify other user product
 )
+
+var (
+	SeedPermissions = []string{
+		PermissionFullAccess,
+		PermissionProductAll,
+		PermissionProductRead,
+		PermissionProductCreate,
+		PermissionProductUpdate,
+		PermissionProductDelete,
+		PermissionProductModifyOther,
+	}
+
+	SeedGroupPermissios = map[string][]string{
+		"DEFAULT": {
+			PermissionProductCreate,
+			PermissionProductRead,
+			PermissionProductUpdate,
+			PermissionProductDelete,
+		},
+		"SUPER_USER": {
+			PermissionFullAccess,
+			PermissionProductAll,
+			PermissionProductRead,
+			PermissionProductCreate,
+			PermissionProductUpdate,
+			PermissionProductDelete,
+			PermissionProductModifyOther,
+		},
+	}
+)

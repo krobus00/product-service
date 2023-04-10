@@ -71,6 +71,10 @@ else ifeq (init-index, $(filter init-index,$(MAKECMDGOALS)))
 	$(shell if ! test -s ./bin/$(SERVICE_NAME); then go build $(build_args); fi)
 	$(eval launch_args=init-index $(launch_args))
 	./bin/$(SERVICE_NAME) $(launch_args)
+else ifeq (init-permission, $(filter init-permission,$(MAKECMDGOALS)))
+	$(shell if ! test -s ./bin/$(SERVICE_NAME); then go build $(build_args); fi)
+	$(eval launch_args=init-permission $(launch_args))
+	./bin/$(SERVICE_NAME) $(launch_args)
 endif
 
 # make build
