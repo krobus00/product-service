@@ -2,8 +2,9 @@ package usecase
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+
+	"github.com/goccy/go-json"
 
 	"github.com/hibiken/asynq"
 	"github.com/krobus00/product-service/internal/model"
@@ -20,6 +21,7 @@ func (uc *productUsecase) HandleUpdateThumbnailTask(ctx context.Context, t *asyn
 	if err := json.Unmarshal(t.Payload(), &payload); err != nil {
 		return fmt.Errorf("json.Unmarshal failed: %v: %w", err, asynq.SkipRetry)
 	}
+	utils.SetSpanBody(span, payload)
 
 	err := uc.productRepo.UpdateAllThumbnail(ctx, payload.OldObjectID, payload.NewObjectID)
 	if err != nil {
