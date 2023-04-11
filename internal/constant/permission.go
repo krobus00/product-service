@@ -9,6 +9,7 @@ const (
 	PermissionProductDelete      = string("PRODUCT_DELETE")       // Only access to delete product
 	PermissionProductRead        = string("PRODUCT_READ")         // Only access to read product
 	PermissionProductModifyOther = string("PRODUCT_MODIFY_OTHER") // Only allow access to modify other user product
+	PermissionProductReadDeleted = string("PRODUCT_READ_DELETED") // only access to read deleted product
 )
 
 var (
