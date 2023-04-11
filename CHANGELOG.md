@@ -2,10 +2,13 @@
 ## [Unreleased]
 
 
-<a name="v0.3.1"></a>
-## [v0.3.1] - 2023-04-11
+<a name="v0.4.0"></a>
+## [v0.4.0] - 2023-04-11
 ### Code Improvements
-- deployment
+- deployment ([#8](https://github.com/krobus00/product-service/issues/8))
+
+### New Features
+- add init permission ([#9](https://github.com/krobus00/product-service/issues/9))
 
 
 <a name="v0.3.0"></a>
@@ -27,7 +30,7 @@
 - implement opensearch ([#1](https://github.com/krobus00/product-service/issues/1))
 
 
-[Unreleased]: https://github.com/krobus00/product-service/compare/v0.3.1...HEAD
-[v0.3.1]: https://github.com/krobus00/product-service/compare/v0.3.0...v0.3.1
+[Unreleased]: https://github.com/krobus00/product-service/compare/v0.4.0...HEAD
+[v0.4.0]: https://github.com/krobus00/product-service/compare/v0.3.0...v0.4.0
 [v0.3.0]: https://github.com/krobus00/product-service/compare/v0.2.0...v0.3.0
 [v0.2.0]: https://github.com/krobus00/product-service/compare/v0.1.0...v0.2.0
