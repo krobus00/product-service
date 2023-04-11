@@ -1,7 +1,3 @@
-launch_args=
-test_args=-coverprofile cover.out && go tool cover -func cover.out
-cover_args=-cover -coverprofile=cover.out `go list ./...` && go tool cover -html=cover.out
-
 SERVICE_NAME=product-service
 VERSION?= $(shell git describe --match 'v[0-9]*' --tags --always)
 DOCKER_IMAGE_NAME=krobus00/${SERVICE_NAME}
@@ -11,6 +7,12 @@ PACKAGE_NAME=github.com/krobus00/${SERVICE_NAME}
 MIGRATION_ACTION?="up"
 MIGRATION_NAME?=""
 MIGRATION_STEP?="999"
+
+build_args=-ldflags "-s -w -X $(PACKAGE_NAME)/internal/config.serviceVersion=$(VERSION) -X $(PACKAGE_NAME)/internal/config.serviceName=$(SERVICE_NAME)" -o bin/$(SERVICE_NAME) main.go
+launch_args=
+test_args=-coverprofile cover.out && go tool cover -func cover.out
+cover_args=-cover -coverprofile=cover.out `go list ./...` && go tool cover -html=cover.out
+
 
 # make tidy
 tidy:
@@ -51,40 +53,44 @@ lint:
 run:
 ifeq (dev server, $(filter dev server,$(MAKECMDGOALS)))
 	$(eval launch_args=server $(launch_args))
-	air --build.cmd 'go build -ldflags "-s -w -X $(PACKAGE_NAME)/internal/config.serviceVersion=$(VERSION) -X $(PACKAGE_NAME)/internal/config.serviceName=$(SERVICE_NAME)" -o bin/product-service main.go' --build.bin "./bin/product-service $(launch_args)"
+	air --build.cmd 'go build $(build_args)' --build.bin "./bin/$(SERVICE_NAME) $(launch_args)"
 else ifeq (dev worker, $(filter dev worker,$(MAKECMDGOALS)))
 	$(eval launch_args=worker $(launch_args))
-	air --build.cmd 'go build -ldflags "-s -w -X $(PACKAGE_NAME)/internal/config.serviceVersion=$(VERSION) -X $(PACKAGE_NAME)/internal/config.serviceName=$(SERVICE_NAME)" -o bin/product-service main.go' --build.bin "./bin/product-service $(launch_args)"
+	air --build.cmd 'go build $(build_args)' --build.bin "./bin/$(SERVICE_NAME) $(launch_args)"
 else ifeq (worker, $(filter worker,$(MAKECMDGOALS)))
 	$(eval launch_args=worker $(launch_args))
-	$(shell if test -s ./bin/product-service; then ./bin/product-service $(launch_args); else echo product binary not found; fi)
+	$(shell if test -s ./bin/$(SERVICE_NAME); then ./bin/$(SERVICE_NAME) $(launch_args); else echo product binary not found; fi)
 else ifeq (server, $(filter server,$(MAKECMDGOALS)))
 	$(eval launch_args=server $(launch_args))
-	$(shell if test -s ./bin/product-service; then ./bin/product-service $(launch_args); else echo product binary not found; fi)
+	$(shell if test -s ./bin/$(SERVICE_NAME); then ./bin/$(SERVICE_NAME) $(launch_args); else echo product binary not found; fi)
 else ifeq (migration, $(filter migration,$(MAKECMDGOALS)))
-	$(shell if ! test -s ./bin/product-service; then go build -ldflags "-s -w -X main.version=$(VERSION) -X main.name=$(SERVICE_NAME)"  -o ./bin/product-service ./main.go; fi)
+	$(shell if ! test -s ./bin/$(SERVICE_NAME); then go build $(build_args); fi)
 	$(eval launch_args=migration --action $(MIGRATION_ACTION) --name $(MIGRATION_NAME) --step $(MIGRATION_STEP) $(launch_args))
-	./bin/product-service $(launch_args)
+	./bin/$(SERVICE_NAME) $(launch_args)
 else ifeq (init-index, $(filter init-index,$(MAKECMDGOALS)))
-	$(shell if ! test -s ./bin/product-service; then go build -ldflags "-s -w -X main.version=$(VERSION) -X main.name=$(SERVICE_NAME)"  -o ./bin/product-service ./main.go; fi)
+	$(shell if ! test -s ./bin/$(SERVICE_NAME); then go build $(build_args); fi)
 	$(eval launch_args=init-index $(launch_args))
-	./bin/product-service $(launch_args)
+	./bin/$(SERVICE_NAME) $(launch_args)
+else ifeq (init-permission, $(filter init-permission,$(MAKECMDGOALS)))
+	$(shell if ! test -s ./bin/$(SERVICE_NAME); then go build $(build_args); fi)
+	$(eval launch_args=init-permission $(launch_args))
+	./bin/$(SERVICE_NAME) $(launch_args)
 endif
 
 # make build
 build:
 	# build binary file
-	go build -ldflags "-s -w -X $(PACKAGE_NAME)/internal/config.serviceVersion=$(VERSION) -X $(PACKAGE_NAME)/internal/config.serviceName=$(SERVICE_NAME)" -o ./bin/product-service ./main.go
+	go build $(build_args)
 ifeq (, $(shell which upx))
 	$(warning "upx not installed")
 else
 	# compress binary file if upx command exist
-	upx -9 ./bin/product-service
+	upx -9 ./bin/$(SERVICE_NAME)
 endif
 
 # make image VERSION="vx.x.x"
 image:
-	docker build -t ${DOCKER_IMAGE_NAME}:${VERSION} . -f ./deployments/Dockerfile
+	docker buildx build -t ${DOCKER_IMAGE_NAME}:${VERSION} . -f ./deployments/Dockerfile
 
 # make push-image VERSION="vx.x.x"
 push-image:
@@ -97,7 +103,7 @@ docker-build-push: image push-image
 # make deploy VERSION="vx.x.x" NAMESPACE="staging"
 # make deploy VERSION="vx.x.x" NAMESPACE="staging" CONFIG="./config-staging.yml"
 deploy:
-	@helm upgrade --install product-service ./deployments/helm/product-service --set-file appConfig="${CONFIG}" --set app.container.version="${VERSION}" -n ${NAMESPACE}
+	@helm upgrade --install $(SERVICE_NAME) ./deployments/helm/$(SERVICE_NAME) --set-file appConfig="${CONFIG}" --set app.container.version="${VERSION}" -n ${NAMESPACE}
 
 # make coverage
 coverage:

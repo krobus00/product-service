@@ -236,7 +236,8 @@ func (uc *productUsecase) FindByID(ctx context.Context, id string) (*model.Produ
 
 	err := hasAccess(ctx, uc.authClient, []string{
 		constant.PermissionProductAll,
-		constant.PermissionProductRead},
+		constant.PermissionProductRead,
+	},
 	)
 	if err != nil {
 		logger.Error(err.Error())
@@ -250,6 +251,18 @@ func (uc *productUsecase) FindByID(ctx context.Context, id string) (*model.Produ
 	}
 	if product == nil {
 		return nil, model.ErrProductNotFound
+	}
+
+	if product.DeletedAt.Valid {
+		err := hasAccess(ctx, uc.authClient, []string{
+			constant.PermissionProductAll,
+			constant.PermissionProductReadDeleted,
+		},
+		)
+		if err != nil {
+			logger.Error(err.Error())
+			return nil, err
+		}
 	}
 
 	return product, nil
@@ -323,7 +336,9 @@ func (uc *productUsecase) hasAccess(ctx context.Context, permissions []string, o
 	}
 
 	if object.OwnerID != userID {
-		err := hasAccess(ctx, uc.authClient, []string{constant.PermissionProductModifyOther})
+		err := hasAccess(ctx, uc.authClient, []string{
+			constant.PermissionProductModifyOther,
+		})
 		if err != nil {
 			return err
 		}

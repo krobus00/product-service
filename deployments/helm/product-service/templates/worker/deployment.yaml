@@ -21,7 +21,7 @@ spec:
         - name: {{ .Values.app.name }}-worker
           image: {{ .Values.app.container.image }}:{{ .Values.app.container.version }}
           imagePullPolicy: "Always"
-          command: ["/app/product-service", "worker"]
+          command: ["/app/bin/product-service", "worker"]
           ports:
             - containerPort: {{ .Values.app.container.ports.metrics }}
           volumeMounts:

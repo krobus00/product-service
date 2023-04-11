@@ -6,7 +6,7 @@ import (
 )
 
 func NewOpensearchClient() (kit.OpensearchClient, error) {
-	opensearhClient, err := kit.NewOpensearchClient(&kit.OSConfig{
+	opensearchClient, err := kit.NewOpensearchClient(&kit.OSConfig{
 		Addresses:          config.OpensearchHost(),
 		InsecureSkipVerify: config.OpensearchInsecure(),
 		Username:           config.OpensearchUsername(),
@@ -16,5 +16,5 @@ func NewOpensearchClient() (kit.OpensearchClient, error) {
 		return nil, err
 	}
 
-	return opensearhClient, err
+	return opensearchClient, err
 }

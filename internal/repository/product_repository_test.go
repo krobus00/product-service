@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"reflect"
 	"strings"
@@ -499,6 +500,166 @@ func Test_productRepository_FindByID(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("productRepository.FindByID() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_productRepository_UpdateAllThumbnail(t *testing.T) {
+	type args struct {
+		oldThumbnailID string
+		newThumbnailID string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		mockErr error
+		wantErr bool
+	}{
+		{
+			name: "success",
+			args: args{
+				oldThumbnailID: "123",
+				newThumbnailID: "321",
+			},
+			mockErr: nil,
+			wantErr: false,
+		},
+		{
+			name: "db error",
+			args: args{
+				oldThumbnailID: "123",
+				newThumbnailID: "321",
+			},
+			mockErr: errors.New("db error"),
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			r, dbMock, _ := newProductRepoMock(t)
+
+			dbMock.ExpectBegin()
+			dbMock.ExpectExec("UPDATE \"products\"").
+				WithArgs(tt.args.newThumbnailID, sqlmock.AnyArg(), tt.args.oldThumbnailID).
+				WillReturnResult(sqlmock.NewResult(1, 1)).
+				WillReturnError(tt.mockErr)
+
+			if tt.wantErr {
+				dbMock.ExpectRollback()
+			} else {
+				dbMock.ExpectCommit()
+			}
+
+			if err := r.UpdateAllThumbnail(context.TODO(), tt.args.oldThumbnailID, tt.args.newThumbnailID); (err != nil) != tt.wantErr {
+				t.Errorf("productRepository.UpdateAllThumbnail() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_productRepository_FindOSPaginatedIDs(t *testing.T) {
+	type args struct {
+		req *model.PaginationPayload
+	}
+	type osMock struct {
+		resp string
+		err  error
+	}
+	tests := []struct {
+		name      string
+		args      args
+		osMock    *osMock
+		wantIds   []string
+		wantCount int64
+		wantErr   bool
+	}{
+		{
+			name: "success",
+			args: args{
+				req: &model.PaginationPayload{
+					Search: "sample product",
+					Sort:   []string{},
+					Limit:  10,
+					Page:   1,
+				},
+			},
+			osMock: &osMock{
+				resp: `{
+          "took": 33,
+          "timed_out": false,
+          "_shards": {
+            "total": 1,
+            "successful": 1,
+            "skipped": 0,
+            "failed": 0
+          },
+          "hits": {
+            "total": {
+              "value": 1,
+              "relation": "eq"
+            },
+            "max_score": 45.986057,
+            "hits": [
+              {
+                "_index": "products",
+                "_id": "1fc34a8d-3d77-4f40-acbc-789c06b4fa5d",
+                "_score": 45.986057,
+                "_source": {
+                  "id": "1fc34a8d-3d77-4f40-acbc-789c06b4fa5d",
+                  "name": "product-",
+                  "description": "description-1680269152107",
+                  "price": 5222789120,
+                  "owner_id": "cd9614c8-112a-4374-9737-eb62cc5d6aef",
+                  "created_at": "2023-03-31T13:25:52.448676961Z",
+                  "updated_at": "2023-03-31T13:25:52.448676961Z",
+                  "deleted_at": null
+                }
+              }
+            ]
+          }
+        }`,
+				err: nil,
+			},
+			wantIds:   []string{"1fc34a8d-3d77-4f40-acbc-789c06b4fa5d"},
+			wantCount: 1,
+			wantErr:   false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			r, _, _ := newProductRepoMock(t)
+			osClient := kitMock.NewMockOpensearchClient(ctrl)
+
+			err := r.InjectOpensearchClient(osClient)
+			utils.ContinueOrFatal(err)
+
+			if tt.osMock != nil {
+				body := io.NopCloser(strings.NewReader(tt.osMock.resp))
+				osClient.EXPECT().Search(gomock.Any(), gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(&opensearchapi.Response{
+						StatusCode: 200,
+						Body:       body,
+					}, tt.osMock.err)
+			}
+
+			gotIds, gotCount, err := r.FindOSPaginatedIDs(context.TODO(), tt.args.req)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("productRepository.FindOSPaginatedIDs() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(gotIds, tt.wantIds) {
+				t.Errorf("productRepository.FindOSPaginatedIDs() gotIds = %v, want %v", gotIds, tt.wantIds)
+			}
+			if gotCount != tt.wantCount {
+				t.Errorf("productRepository.FindOSPaginatedIDs() gotCount = %v, want %v", gotCount, tt.wantCount)
 			}
 		})
 	}
