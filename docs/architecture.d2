@@ -1,0 +1,41 @@
+title: |md
+  # Product Service Architecture
+| {near: top-center}
+
+infra: Infrastructure {
+  pg: PostgreSQL {
+    shape: image
+    icon: https://icons.terrastruct.com/dev%2Fpostgresql.svg
+  }
+
+  redis: Redis {
+    shape: image
+    icon: https://icons.terrastruct.com/dev%2Fredis.svg
+  }
+
+  nats: NATS Jetstream {
+    shape: image
+    icon: https://nats.io/img/logos/nats-horizontal-color.png
+  }
+
+  asynq: Asynq {
+    shape: image
+    icon: https://user-images.githubusercontent.com/11155743/114697792-ffbfa580-9d26-11eb-8e5b-33bef69476dc.png
+  }
+}
+
+product-service: Product Service {
+  product-service-server: Product Service Server
+  product-service-worker: Product Service Worker
+}
+
+storage-service-server: Storage Service Server
+nexus-service: Nexus Service
+auth-service-server: Auth Service Server
+
+product-service <-> infra
+
+product-service.product-service-server <-> auth-service-server: gRPC
+product-service.product-service-server <-> nexus-service: gRPC
+product-service.product-service-server <-> storage-service-server: gRPC
+product-service.product-service-worker <-> storage-service-server: NATS Jetstream
