@@ -337,6 +337,7 @@ func (uc *productUsecase) hasAccess(ctx context.Context, permissions []string, o
 
 	if object.OwnerID != userID {
 		err := hasAccess(ctx, uc.authClient, []string{
+			constant.PermissionProductAll,
 			constant.PermissionProductModifyOther,
 		})
 		if err != nil {
