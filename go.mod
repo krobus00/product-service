@@ -10,7 +10,6 @@ require (
 	github.com/goccy/go-json v0.10.2
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.3.0
-	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.0-rc.5
 	github.com/hibiken/asynq v0.24.0
 	github.com/jpillora/backoff v1.0.0
 	github.com/krobus00/auth-service v0.4.2
