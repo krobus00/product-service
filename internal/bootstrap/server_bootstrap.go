@@ -17,11 +17,11 @@ import (
 	pb "github.com/krobus00/product-service/pb/product"
 	storagePB "github.com/krobus00/storage-service/pb/storage"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
-
-	"github.com/sirupsen/logrus"
 )
 
 func StartServer() {
@@ -44,11 +44,16 @@ func StartServer() {
 	utils.ContinueOrFatal(err)
 
 	// init grpc client
-	authConn, err := grpc.Dial(config.AuthGRPCHost(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	grpcOpts := []grpc.DialOption{
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
+	}
+
+	authConn, err := grpc.Dial(config.AuthGRPCHost(), grpcOpts...)
 	utils.ContinueOrFatal(err)
 	authClient := authPB.NewAuthServiceClient(authConn)
 
-	storageConn, err := grpc.Dial(config.StorageGRPCHost(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	storageConn, err := grpc.Dial(config.StorageGRPCHost(), grpcOpts...)
 	utils.ContinueOrFatal(err)
 	storageClient := storagePB.NewStorageServiceClient(storageConn)
 
