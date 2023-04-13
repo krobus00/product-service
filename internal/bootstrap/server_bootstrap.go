@@ -126,6 +126,9 @@ func StartServer() {
 			return nc.Drain()
 		},
 		"trace provider": func(ctx context.Context) error {
+			if config.DisableTracing() {
+				return nil
+			}
 			return tp.Shutdown(ctx)
 		},
 	})

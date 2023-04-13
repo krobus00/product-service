@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"sync"
 
 	"github.com/hibiken/asynq"
@@ -41,10 +42,7 @@ func (uc *productUsecase) Create(ctx context.Context, payload *model.CreateProdu
 
 	newProduct := payload.ToProduct(userID)
 
-	err := hasAccess(ctx, uc.authClient, []string{
-		constant.PermissionProductAll,
-		constant.PermissionProductCreate,
-	})
+	err := uc.hasAccess(ctx, constant.ActionCreate, nil)
 	if err != nil {
 		logger.Error(err.Error())
 		return nil, err
@@ -97,10 +95,7 @@ func (uc *productUsecase) Update(ctx context.Context, payload *model.UpdateProdu
 		return nil, model.ErrProductNotFound
 	}
 
-	err = uc.hasAccess(ctx, []string{
-		constant.PermissionProductAll,
-		constant.PermissionProductUpdate,
-	}, product)
+	err = uc.hasAccess(ctx, constant.ActionUpdate, product)
 	if err != nil {
 		logger.Error(err.Error())
 		return nil, err
@@ -154,11 +149,11 @@ func (uc *productUsecase) Delete(ctx context.Context, id string) error {
 		return model.ErrProductNotFound
 	}
 
-	err = uc.hasAccess(ctx, []string{
-		constant.PermissionProductAll,
-		constant.PermissionProductDelete,
-	}, product)
+	if product.DeletedAt.Valid {
+		return model.ErrProductAlreadyDeleted
+	}
 
+	err = uc.hasAccess(ctx, constant.ActionDelete, product)
 	if err != nil {
 		logger.Error(err.Error())
 		return err
@@ -193,11 +188,19 @@ func (uc *productUsecase) FindPaginatedIDs(ctx context.Context, req *model.Pagin
 		"limit":  req.Limit,
 	})
 
-	err := hasAccess(ctx, uc.authClient, []string{
+	permission := []string{
 		constant.PermissionProductAll,
-		constant.PermissionProductRead,
-	})
+	}
+
+	if req.IncludeDeleted {
+		permission = append(permission, constant.PermissionProductReadDeleted)
+	} else {
+		permission = append(permission, constant.PermissionProductRead, constant.PermissionProductReadOther)
+	}
+
+	err := hasAccess(ctx, uc.authClient, permission)
 	if err != nil {
+		logger.Error(err.Error())
 		return nil, err
 	}
 
@@ -234,16 +237,6 @@ func (uc *productUsecase) FindByID(ctx context.Context, id string) (*model.Produ
 		"productID": id,
 	})
 
-	err := hasAccess(ctx, uc.authClient, []string{
-		constant.PermissionProductAll,
-		constant.PermissionProductRead,
-	},
-	)
-	if err != nil {
-		logger.Error(err.Error())
-		return nil, err
-	}
-
 	product, err := uc.productRepo.FindByID(ctx, id)
 	if err != nil {
 		logger.Error(err.Error())
@@ -253,16 +246,10 @@ func (uc *productUsecase) FindByID(ctx context.Context, id string) (*model.Produ
 		return nil, model.ErrProductNotFound
 	}
 
-	if product.DeletedAt.Valid {
-		err := hasAccess(ctx, uc.authClient, []string{
-			constant.PermissionProductAll,
-			constant.PermissionProductReadDeleted,
-		},
-		)
-		if err != nil {
-			logger.Error(err.Error())
-			return nil, err
-		}
+	err = uc.hasAccess(ctx, constant.ActionRead, product)
+	if err != nil {
+		logger.Error(err.Error())
+		return nil, err
 	}
 
 	return product, nil
@@ -281,10 +268,7 @@ func (uc *productUsecase) FindByIDs(ctx context.Context, ids []string) (model.Pr
 	})
 	products := model.Products{}
 
-	err := hasAccess(ctx, uc.authClient, []string{
-		constant.PermissionProductAll,
-		constant.PermissionProductRead,
-	})
+	err := uc.hasAccess(ctx, constant.ActionRead, nil)
 	if err != nil {
 		logger.Error(err.Error())
 		return products, err
@@ -307,9 +291,11 @@ func (uc *productUsecase) FindByIDs(ctx context.Context, ids []string) (model.Pr
 				logger.Error(err.Error())
 				return
 			}
-			productMapMu.Lock()
-			productMap[id] = product
-			productMapMu.Unlock()
+			if product != nil {
+				productMapMu.Lock()
+				productMap[id] = product
+				productMapMu.Unlock()
+			}
 		}(productID)
 	}
 
@@ -324,26 +310,45 @@ func (uc *productUsecase) FindByIDs(ctx context.Context, ids []string) (model.Pr
 	return products, nil
 }
 
-func (uc *productUsecase) hasAccess(ctx context.Context, permissions []string, object *model.Product) error {
+func (uc *productUsecase) hasAccess(ctx context.Context, action constant.ActionType, object *model.Product) error {
 	_, _, fn := utils.Trace()
 	ctx, span := utils.NewSpan(ctx, fn)
 	defer span.End()
 
 	userID := getUserIDFromCtx(ctx)
 
-	if object.OwnerID == userID {
-		return nil
+	permissions := []string{
+		constant.PermissionProductAll,
 	}
 
-	if object.OwnerID != userID {
-		err := hasAccess(ctx, uc.authClient, []string{
-			constant.PermissionProductAll,
-			constant.PermissionProductModifyOther,
-		})
-		if err != nil {
-			return err
+	switch action {
+	case constant.ActionCreate:
+		permissions = append(permissions, constant.PermissionProductCreate)
+	case constant.ActionRead:
+		if object == nil {
+			permissions = append(permissions, constant.PermissionProductRead)
+			break
 		}
-		return nil
+		if object.DeletedAt.Valid {
+			permissions = append(permissions, constant.PermissionProductReadDeleted)
+		}
+		if !object.DeletedAt.Valid && object.OwnerID != userID {
+			permissions = append(permissions, constant.PermissionProductReadOther)
+		}
+	case constant.ActionUpdate:
+		if object.OwnerID == userID {
+			permissions = append(permissions, constant.PermissionProductUpdate)
+		} else {
+			permissions = append(permissions, constant.PermissionProductModifyOther)
+		}
+	case constant.ActionDelete:
+		if object.OwnerID == userID {
+			permissions = append(permissions, constant.PermissionProductDelete)
+		} else {
+			permissions = append(permissions, constant.PermissionProductModifyOther)
+		}
+	default:
+		return errors.New("invaid action")
 	}
 
 	err := hasAccess(ctx, uc.authClient, permissions)

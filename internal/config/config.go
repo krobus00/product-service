@@ -227,6 +227,10 @@ func JaegerPort() string {
 	return viper.GetString("jaeger.port")
 }
 
+func DisableTracing() bool {
+	return viper.GetBool("jaeger.disable_tracing")
+}
+
 func JaegerSampleRate() float64 {
 	return viper.GetFloat64("jaeger.sample_rate")
 }
