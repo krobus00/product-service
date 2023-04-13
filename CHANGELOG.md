@@ -4,7 +4,11 @@
 
 <a name="v0.5.0"></a>
 ## [v0.5.0] - 2023-04-13
+### Code Improvements
+- product auth ([#15](https://github.com/krobus00/product-service/issues/15))
+
 ### New Features
+- add kubernetes job ([#16](https://github.com/krobus00/product-service/issues/16))
 - add infra tracing ([#11](https://github.com/krobus00/product-service/issues/11))
 - infra tracing
 - add grpc tracing interfceptor
