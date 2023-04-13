@@ -690,11 +690,12 @@ func Test_productUsecase_Delete(t *testing.T) {
 
 			if tt.mockSelect != nil {
 				mockProductRepo.EXPECT().FindByID(gomock.Any(), tt.args.id).Times(1).Return(tt.mockSelect.product, tt.mockSelect.err)
-				if tt.mockAuth != nil && tt.mockSelect.product.OwnerID != tt.userID {
-					mockAuthClient.EXPECT().HasAccess(gomock.Any(), gomock.Any()).Times(1).Return(&wrapperspb.BoolValue{
-						Value: tt.mockAuth.hasAccess,
-					}, tt.mockAuth.err)
-				}
+			}
+
+			if tt.mockAuth != nil {
+				mockAuthClient.EXPECT().HasAccess(gomock.Any(), gomock.Any()).Times(1).Return(&wrapperspb.BoolValue{
+					Value: tt.mockAuth.hasAccess,
+				}, tt.mockAuth.err)
 			}
 
 			if tt.mockDelete != nil {
@@ -919,10 +920,6 @@ func Test_productUsecase_FindByID(t *testing.T) {
 				product: nil,
 				err:     errors.New("db error"),
 			},
-			mockAuth: &mockAuth{
-				hasAccess: true,
-				err:       nil,
-			},
 			want:    nil,
 			wantErr: true,
 		},
@@ -932,6 +929,17 @@ func Test_productUsecase_FindByID(t *testing.T) {
 				id: productID,
 			},
 			userID: userID,
+			mockFindByID: &mockFindByID{
+				product: &model.Product{
+					ID:          productID,
+					Name:        "product1",
+					Description: "product1",
+					Price:       17.17,
+					ThumbnailID: thumbnailID,
+					OwnerID:     userID,
+				},
+				err: nil,
+			},
 			mockAuth: &mockAuth{
 				hasAccess: false,
 				err:       nil,
