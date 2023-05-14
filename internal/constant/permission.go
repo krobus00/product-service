@@ -8,7 +8,8 @@ const (
 	ActionUpdate ActionType = "UPDATE"
 	ActionDelete ActionType = "DELETE"
 
-	PermissionFullAccess = string("FULL_ACCESS") // Full access to all object
+	PermissionFullAccess  = string("FULL_ACCESS")  // Full access to all object
+	PermissionGuestAccess = string("GUEST_ACCESS") // alow guest to access object
 
 	PermissionProductAll         = string("PRODUCT_ALL")          // Full access to product that they own
 	PermissionProductCreate      = string("PRODUCT_CREATE")       // Only access to create product

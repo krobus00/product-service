@@ -107,12 +107,13 @@ func StartWorker() {
 	err = asynqDelivery.InitRoutes()
 	utils.ContinueOrFatal(err)
 
-	http.Handle("/metrics", promhttp.Handler())
-
-	go func() {
-		_ = http.ListenAndServe(fmt.Sprintf(":%s", config.PortMetrics()), nil)
-	}()
-	logrus.Info(fmt.Sprintf("metrics server started on :%s", config.PortMetrics()))
+	if !config.DisableTracing() {
+		http.Handle("/metrics", promhttp.Handler())
+		go func() {
+			_ = http.ListenAndServe(fmt.Sprintf(":%s", config.PortMetrics()), nil)
+		}()
+		logrus.Info(fmt.Sprintf("metrics server started on :%s", config.PortMetrics()))
+	}
 
 	if err := asynqServer.Run(mux); err != nil {
 		logrus.Fatalf("could not run asynq server: %v", err)

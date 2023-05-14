@@ -180,6 +180,8 @@ func (uc *productUsecase) FindPaginatedIDs(ctx context.Context, req *model.Pagin
 		dataSource = getDataSource(ctx)
 	)
 
+	res := model.NewPaginationResponse(req)
+
 	logger := logrus.WithFields(logrus.Fields{
 		"userID": userID,
 		"search": req.Search,
@@ -201,7 +203,7 @@ func (uc *productUsecase) FindPaginatedIDs(ctx context.Context, req *model.Pagin
 	err := hasAccess(ctx, uc.authClient, permission)
 	if err != nil {
 		logger.Error(err.Error())
-		return nil, err
+		return res, err
 	}
 
 	req = req.Sanitize()
@@ -215,12 +217,10 @@ func (uc *productUsecase) FindPaginatedIDs(ctx context.Context, req *model.Pagin
 	}
 	if err != nil {
 		logger.Error(err.Error())
-		return nil, err
+		return res.BuildResponse(), err
 	}
 
-	res := model.NewPaginationResponse(req).
-		WithCount(count).
-		WithItems(ids)
+	res = res.WithCount(count).WithItems(ids)
 
 	return res.BuildResponse(), nil
 }

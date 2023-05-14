@@ -107,12 +107,14 @@ func StartServer() {
 	}()
 	logrus.Info(fmt.Sprintf("grpc server started on :%s", config.PortGRPC()))
 
-	http.Handle("/metrics", promhttp.Handler())
+	if !config.DisableTracing() {
+		http.Handle("/metrics", promhttp.Handler())
 
-	go func() {
-		_ = http.ListenAndServe(fmt.Sprintf(":%s", config.PortMetrics()), nil)
-	}()
-	logrus.Info(fmt.Sprintf("metrics server started on :%s", config.PortMetrics()))
+		go func() {
+			_ = http.ListenAndServe(fmt.Sprintf(":%s", config.PortMetrics()), nil)
+		}()
+		logrus.Info(fmt.Sprintf("metrics server started on :%s", config.PortMetrics()))
+	}
 
 	wait := gracefulShutdown(context.Background(), config.GracefulShutdownTimeOut(), map[string]operation{
 		"database connection": func(ctx context.Context) error {

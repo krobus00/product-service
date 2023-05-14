@@ -19,9 +19,9 @@ type Query struct {
 }
 
 type Bool struct {
-	MustNot []MustNot `json:"must_not"`
-	Must    Must      `json:"must"`
-	Filter  []Filter  `json:"filter"`
+	MustNot []*MustNot `json:"must_not,omitempty"`
+	Must    *Must      `json:"must,omitempty"`
+	Filter  []Filter   `json:"filter,omitempty"`
 }
 
 type Filter struct {

@@ -137,9 +137,9 @@ func (t *Delivery) FindPaginatedIDs(ctx context.Context, in *pb.PaginationReques
 	switch err {
 	case nil:
 	case model.ErrUnauthorizedAccess:
-		return nil, status.Error(codes.Unauthenticated, err.Error())
+		return res.ToProto(), status.Error(codes.Unauthenticated, err.Error())
 	default:
-		return nil, status.Error(codes.Internal, codes.Internal.String())
+		return res.ToProto(), status.Error(codes.Internal, codes.Internal.String())
 	}
 
 	return res.ToProto(), nil
