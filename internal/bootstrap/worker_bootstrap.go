@@ -135,6 +135,9 @@ func StartWorker() {
 			return asynqClient.Close()
 		},
 		"trace provider": func(ctx context.Context) error {
+			if config.DisableTracing() {
+				return nil
+			}
 			return tp.Shutdown(ctx)
 		},
 	})
