@@ -1,6 +1,7 @@
 package infrastructure
 
 import (
+	"github.com/go-redis/redis/extra/redisotel/v8"
 	goredis "github.com/go-redis/redis/v8"
 	"github.com/krobus00/product-service/internal/config"
 )
@@ -23,5 +24,8 @@ func NewRedisClient() (*goredis.Client, error) {
 		ReadTimeout:  config.RedisReadTimeout(),
 	}
 	rdb := goredis.NewClient(redisOpts)
+
+	rdb.AddHook(redisotel.NewTracingHook())
+
 	return rdb, nil
 }

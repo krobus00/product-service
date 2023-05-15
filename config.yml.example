@@ -37,6 +37,7 @@ services:
   auth_grpc: "localhost:5000"
   storage_grpc: "localhost:5001"
 jaeger:
+  disable_tracing: true
   protocol: "http" # http|grpc
   host: "localhost"
   port: "14268" # 14268|6831

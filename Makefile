@@ -12,7 +12,7 @@ build_args=-ldflags "-s -w -X $(PACKAGE_NAME)/internal/config.serviceVersion=$(V
 launch_args=
 test_args=-coverprofile cover.out && go tool cover -func cover.out
 cover_args=-cover -coverprofile=cover.out `go list ./...` && go tool cover -html=cover.out
-
+air_args=--log.main_only=true --build.send_interrupt=true --build.rerun=true --build.delay '500'
 
 # make tidy
 tidy:
@@ -53,10 +53,10 @@ lint:
 run:
 ifeq (dev server, $(filter dev server,$(MAKECMDGOALS)))
 	$(eval launch_args=server $(launch_args))
-	air --build.cmd 'go build $(build_args)' --build.bin "./bin/$(SERVICE_NAME) $(launch_args)"
+	air $(air_args) --build.cmd 'go build $(build_args)' --build.bin "./bin/$(SERVICE_NAME) $(launch_args)"
 else ifeq (dev worker, $(filter dev worker,$(MAKECMDGOALS)))
 	$(eval launch_args=worker $(launch_args))
-	air --build.cmd 'go build $(build_args)' --build.bin "./bin/$(SERVICE_NAME) $(launch_args)"
+	air $(air_args) --build.cmd 'go build $(build_args)' --build.bin "./bin/$(SERVICE_NAME) $(launch_args)"
 else ifeq (worker, $(filter worker,$(MAKECMDGOALS)))
 	$(eval launch_args=worker $(launch_args))
 	$(shell if test -s ./bin/$(SERVICE_NAME); then ./bin/$(SERVICE_NAME) $(launch_args); else echo product binary not found; fi)
@@ -85,7 +85,7 @@ ifeq (, $(shell which upx))
 	$(warning "upx not installed")
 else
 	# compress binary file if upx command exist
-	upx -9 ./bin/$(SERVICE_NAME)
+	upx --best --lzma ./bin/$(SERVICE_NAME)
 endif
 
 # make image VERSION="vx.x.x"

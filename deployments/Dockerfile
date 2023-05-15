@@ -11,4 +11,5 @@ RUN make build
 FROM alpine:3.8
 WORKDIR /app
 COPY --from=base /builder/bin/product-service /app/bin/product-service
+COPY --from=base /builder/db /app/db
 CMD ["/app/bin/product-service", "server"]

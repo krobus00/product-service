@@ -17,6 +17,7 @@ import (
 	storagePB "github.com/krobus00/storage-service/pb/storage"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -46,11 +47,16 @@ func StartWorker() {
 	utils.ContinueOrFatal(err)
 
 	// init grpc client
-	authConn, err := grpc.Dial(config.AuthGRPCHost(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	grpcOpts := []grpc.DialOption{
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
+	}
+
+	authConn, err := grpc.Dial(config.AuthGRPCHost(), grpcOpts...)
 	utils.ContinueOrFatal(err)
 	authClient := authPB.NewAuthServiceClient(authConn)
 
-	storageConn, err := grpc.Dial(config.StorageGRPCHost(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	storageConn, err := grpc.Dial(config.StorageGRPCHost(), grpcOpts...)
 	utils.ContinueOrFatal(err)
 	storageClient := storagePB.NewStorageServiceClient(storageConn)
 
@@ -101,12 +107,13 @@ func StartWorker() {
 	err = asynqDelivery.InitRoutes()
 	utils.ContinueOrFatal(err)
 
-	http.Handle("/metrics", promhttp.Handler())
-
-	go func() {
-		_ = http.ListenAndServe(fmt.Sprintf(":%s", config.PortMetrics()), nil)
-	}()
-	logrus.Info(fmt.Sprintf("metrics server started on :%s", config.PortMetrics()))
+	if !config.DisableTracing() {
+		http.Handle("/metrics", promhttp.Handler())
+		go func() {
+			_ = http.ListenAndServe(fmt.Sprintf(":%s", config.PortMetrics()), nil)
+		}()
+		logrus.Info(fmt.Sprintf("metrics server started on :%s", config.PortMetrics()))
+	}
 
 	if err := asynqServer.Run(mux); err != nil {
 		logrus.Fatalf("could not run asynq server: %v", err)
@@ -128,6 +135,9 @@ func StartWorker() {
 			return asynqClient.Close()
 		},
 		"trace provider": func(ctx context.Context) error {
+			if config.DisableTracing() {
+				return nil
+			}
 			return tp.Shutdown(ctx)
 		},
 	})

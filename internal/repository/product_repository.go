@@ -247,18 +247,17 @@ func (r *productRepository) FindOSPaginatedIDs(ctx context.Context, req *model.P
 		From:           int64((req.Page - 1) * req.Limit),
 		Size:           int64(req.Limit),
 		TrackTotalHits: true,
-		Query: model.Query{
-			Bool: model.Bool{
-				Must: model.Must{
-					MultiMatch: model.MultiMatch{
-						Query:              req.Search,
-						Analyzer:           model.OSProductAnalyzer,
-						Fields:             model.ProductSearchColumns,
-						MinimumShouldMatch: model.OSProductMinimumShouldMatch,
-					},
-				},
+	}
+
+	if req.Search != "" {
+		paginationRequest.Query.Bool.Must = &model.Must{
+			MultiMatch: model.MultiMatch{
+				Query:              req.Search,
+				Analyzer:           model.OSProductAnalyzer,
+				Fields:             model.ProductSearchColumns,
+				MinimumShouldMatch: model.OSProductMinimumShouldMatch,
 			},
-		},
+		}
 	}
 
 	if !req.IncludeDeleted {

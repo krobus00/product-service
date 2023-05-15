@@ -37,6 +37,7 @@ var (
 	ProductSearchColumns = []string{"name", "description"}
 
 	ErrProductNotFound         = errors.New("product not found")
+	ErrProductAlreadyDeleted   = errors.New("product already deleted")
 	ErrThumbnailNotFound       = errors.New("thumbnail not found")
 	ErrThumbnailTypeNotAllowed = errors.New("thumbnail type not allowed")
 	ErrThumbnailNotAllowed     = errors.New("thumbnail not allowed")

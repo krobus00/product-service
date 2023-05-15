@@ -9,6 +9,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	gormLogger "gorm.io/gorm/logger"
+	"gorm.io/plugin/opentelemetry/tracing"
 )
 
 var (
@@ -89,9 +90,14 @@ func openDBConn(dsn string) (*gorm.DB, error) {
 		return nil, err
 	}
 
+	err = db.Use(tracing.NewPlugin(tracing.WithoutMetrics()))
+	if err != nil {
+		return nil, err
+	}
+
 	conn, err := db.DB()
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	conn.SetMaxIdleConns(config.DatabaseMaxIdleConns())
 	conn.SetMaxOpenConns(config.DatabaseMaxOpenConns())

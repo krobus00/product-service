@@ -16,3 +16,7 @@ const (
 	SourceOS
 	SourceRedis
 )
+
+var RedactedField = map[string]bool{
+	"password": true,
+}
