@@ -32,4 +32,6 @@ func Init() {
 	}
 
 	log.Info(fmt.Sprintf("starting %s:%s...", config.ServiceName(), config.ServiceVersion()))
+	logLevel, _ := log.ParseLevel(config.LogLevel())
+	log.SetLevel(logLevel)
 }

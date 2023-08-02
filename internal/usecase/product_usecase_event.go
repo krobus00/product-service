@@ -1,8 +1,9 @@
 package usecase
 
 import (
-	"encoding/json"
 	"fmt"
+
+	"github.com/goccy/go-json"
 
 	"github.com/hibiken/asynq"
 	"github.com/krobus00/product-service/internal/config"

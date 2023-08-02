@@ -147,6 +147,10 @@ func (m *PaginationResponse) WithItems(items []string) *PaginationResponse {
 }
 
 func (m *PaginationResponse) BuildResponse() *PaginationResponse {
+	if m.Count <= 0 {
+		m.MaxPage = 0
+		return m
+	}
 	m.MaxPage = int64(math.Ceil(float64(m.Count) / float64(m.Meta.Limit)))
 	return m
 }
